@@ -1,0 +1,288 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Intranet - Yucasa Desarrollos</title>
+    <link rel="icon" type="image/png" href="{% static 'img/logo_yucasa.png' %}" />
+    <link rel="apple-touch-icon" href="{% static 'img/logo_yucasa.png' %}" />
+    <link rel="manifest" href="{% static 'manifest.json' %}" />
+    <link
+      href="{% static 'css/bootstrap.min.css' %}"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="{% static 'icons/bootstrap-icons.min.css' %}"
+    />
+    <style>
+      :root {
+        --primary-color: #1a1a1a;
+        --accent-color: #c5a059;
+        --text-light: #f8f9fa;
+      }
+
+      body {
+        background: radial-gradient(circle at center, #2c3e50 0%, #000000 100%);
+        color: var(--text-light);
+        font-family: "Inter", sans-serif;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .navbar {
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(197, 160, 89, 0.2);
+        padding: 1rem 2rem;
+      }
+
+      .navbar-brand img {
+        height: 60px;
+        filter: drop-shadow(0 0 10px rgba(197, 160, 89, 0.3));
+      }
+
+      .hero-section {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+      }
+
+      .card-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2.5rem;
+        max-width: 1200px;
+        width: 100%;
+      }
+
+      .system-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 3rem 2rem;
+        text-align: center;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        text-decoration: none;
+        color: inherit;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .system-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          135deg,
+          rgba(197, 160, 89, 0.1) 0%,
+          transparent 100%
+        );
+        opacity: 0;
+        transition: opacity 0.4s;
+      }
+
+      .system-card:hover {
+        transform: translateY(-10px);
+        border-color: var(--accent-color);
+        box-shadow:
+          0 15px 40px rgba(0, 0, 0, 0.4),
+          0 0 20px rgba(197, 160, 89, 0.2);
+      }
+
+      .system-card:hover::before {
+        opacity: 1;
+      }
+
+      .icon-wrapper {
+        width: 80px;
+        height: 80px;
+        background: rgba(197, 160, 89, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 2.5rem;
+        color: var(--accent-color);
+        transition: transform 0.4s;
+      }
+
+      .system-card:hover .icon-wrapper {
+        transform: scale(1.1) rotate(5deg);
+        background: var(--accent-color);
+        color: white;
+      }
+
+      .system-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        letter-spacing: 1px;
+      }
+
+      .system-description {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 1rem;
+        line-height: 1.5;
+      }
+
+      .footer {
+        padding: 2rem;
+        text-align: center;
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.4);
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .card-container > * {
+        animation: fadeIn 0.8s ease-out forwards;
+      }
+
+      .card-container > *:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg">
+      <div
+        class="container-fluid d-flex justify-content-between align-items-center"
+      >
+        <span class="text-muted d-none d-md-inline"
+          >Bienvenido al Portal Corporativo</span
+        >
+        <a class="navbar-brand m-0" href="#">
+          <img
+            src="{% static 'img/logo_yucasa.png' %}"
+            alt="Yucasa Desarrollos"
+          />
+        </a>
+        <div class="d-flex align-items-center">
+          {% if user.is_authenticated %}
+          <span class="me-3 d-none d-sm-inline">{{ user.username }}</span>
+          <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm"
+            >Salir</a
+          >
+          {% else %}
+          <span class="text-muted small"
+            >Seleccione un sistema para ingresar</span
+          >
+          {% endif %}
+        </div>
+      </div>
+    </nav>
+
+    <main class="hero-section">
+      <div class="text-center w-100">
+        <h1 class="display-4 fw-bold mb-5" style="letter-spacing: 2px">
+          CENTRAL DE SISTEMAS
+        </h1>
+        <div class="card-container mx-auto">
+          <!-- Sistema de Tickets IA -->
+          <a href="{% url 'login' %}" class="system-card">
+            <div class="icon-wrapper">
+              <i class="bi bi-robot"></i>
+            </div>
+            <div class="system-title">TICKETS</div>
+            <p class="system-description">
+              Gestión inteligente de soporte técnico TI.
+            </p>
+          </a>
+
+          <!-- Sistema Enkontrol -->
+          <a href="{% url 'econtrol_login' %}" class="system-card">
+            <div class="icon-wrapper">
+              <i class="bi bi-building"></i>
+            </div>
+            <div class="system-title">ENKONTROL</div>
+            <p class="system-description">
+              Panel de control administrativo y gestión de procesos
+              corporativos.
+            </p>
+          </a>
+
+          <!-- Sistema de Reservaciones -->
+          <a href="{% url 'reservas_login' %}" class="system-card">
+            <div class="icon-wrapper">
+              <i class="bi bi-calendar-event"></i>
+            </div>
+            <div class="system-title">RESERVAS TORRE UNO</div>
+            <p class="system-description">
+              Reservación de salas de juntas y espacios corporativos.
+            </p>
+          </a>
+
+          <!-- Intranet Mural -->
+          <a href="{% url 'intranet_mural' %}" class="system-card">
+            <div class="icon-wrapper">
+              <i class="bi bi-globe"></i>
+            </div>
+            <div class="system-title">INTRANET</div>
+            <p class="system-description">
+              Mural de novedades, eventos y noticias corporativas.
+            </p>
+          </a>
+
+          <!-- Sistema de Préstamos -->
+          <a href="{% url 'prestamos_login' %}" class="system-card">
+            <div class="icon-wrapper">
+              <i class="bi bi-laptop"></i>
+            </div>
+            <div class="system-title">PRÉSTAMOS</div>
+            <p class="system-description">
+              Gestión de préstamos de equipos y activos TI.
+            </p>
+          </a>
+
+          <!-- Almacén TI -->
+          <a href="{% url 'almacen_login' %}" class="system-card">
+            <div class="icon-wrapper">
+              <i class="bi bi-box-seam"></i>
+            </div>
+            <div class="system-title">ALMACÉN Y VALES</div>
+            <p class="system-description">
+              Control de inventario y vales de almacén.
+            </p>
+          </a>
+
+          <!-- Catálogos -->
+          <a href="{% url 'catalogos_login' %}" class="system-card">
+            <div class="icon-wrapper">
+              <i class="bi bi-journal-text"></i>
+            </div>
+            <div class="system-title">CATÁLOGOS</div>
+            <p class="system-description">
+              Administración de catálogos y configuraciones maestras.
+            </p>
+          </a>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      &copy; 2026 Yucasa Desarrollos | Todos los derechos reservados
+    </footer>
+
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+  </body>
+</html>

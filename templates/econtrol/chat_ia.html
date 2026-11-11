@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Enkontrol - Chat IA Analista{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card border-0 shadow-sm" style="height: 70vh;">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="bi bi-robot"></i> Chat IA Enkontrol - Análisis de Datos</h4>
+                    <a href="{% url 'econtrol_reportes' %}" class="btn btn-sm btn-outline-light">
+                        <i class="bi bi-arrow-left"></i> Volver a Reportes
+                    </a>
+                </div>
+                <div class="card-body d-flex flex-column" id="chatContainer">
+                    {% csrf_token %}
+                    <div id="chatMessages" class="flex-grow-1 overflow-auto mb-3 p-3" style="max-height: 60vh; background-color: #f8f9fa; border-radius: 10px;">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Bienvenido al Analista IA de Enkontrol</strong><br>
+                            Soy tu asistente especializado en los datos de soporte de Enkontrol. Puedo ayudarte con:<br>
+                            - Análisis de tendencias y problemas recurrentes<br>
+                            - Estadísticas por prioridad, nivel y estado<br>
+                            - Resúmenes ejecutivos para gerencia<br>
+                            - Identificación de cuellos de botella en la resolución
+                        </div>
+                    </div>
+                    
+                    <div class="input-group mb-2">
+                        <input type="text" class="form-control border-primary" id="userMessage" 
+                               placeholder="Hazme una pregunta sobre los datos de Enkontrol..." 
+                               onkeypress="if(event.key==='Enter')sendMessage()">
+                        <button class="btn btn-primary px-4" type="button" id="sendBtn" onclick="sendMessage()">
+                            <i class="bi bi-send-fill"></i>
+                        </button>
+                    </div>
+                    <small class="text-muted"><i class="bi bi-lightbulb"></i> Prueba preguntando: "¿Cuál es la prioridad más común en los últimos tickets?"</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let isLoading = false;
+
+function appendMessage(content, isUser = false) {
+    const container = document.getElementById('chatMessages');
+    const messageWrapper = document.createElement('div');
+    messageWrapper.className = isUser ? 'd-flex justify-content-end mb-3' : 'd-flex justify-content-start mb-3';
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = isUser ? 'p-3 rounded-3 text-white bg-primary shadow-sm' : 'p-3 rounded-3 bg-white border shadow-sm';
+    messageDiv.style.maxWidth = '80%';
+    
+    if (isUser) {
+        messageDiv.innerHTML = '<strong><i class="bi bi-person-fill me-1"></i> Tú:</strong><br>' + content;
+    } else {
+        // Formatear markdown básico (tablas y negritas)
+        let formatted = content.replace(/\n/g, '<br>');
+        // Reemplazar tablas markdown simples
+        if (content.includes('|')) {
+            // Lógica simple para tablas si es necesario, por ahora br es suficiente
+        }
+        messageDiv.innerHTML = '<strong><i class="bi bi-robot me-1"></i> Analista IA:</strong><br>' + formatted;
+    }
+    
+    messageWrapper.appendChild(messageDiv);
+    container.appendChild(messageWrapper);
+    container.scrollTop = container.scrollHeight;
+}
+
+async function sendMessage() {
+    if (isLoading) return;
+    
+    const input = document.getElementById('userMessage');
+    const btn = document.getElementById('sendBtn');
+    const message = input.value.trim();
+    
+    if (!message) return;
+    
+    isLoading = true;
+    input.disabled = true;
+    btn.disabled = true;
+    
+    appendMessage(message, true);
+    input.value = '';
+    
+    // Mostrar indicador de carga
+    const loadingWrapper = document.createElement('div');
+    loadingWrapper.id = 'loadingMessage';
+    loadingWrapper.className = 'd-flex justify-content-start mb-3';
+    loadingWrapper.innerHTML = `
+        <div class="p-3 rounded-3 bg-light border shadow-sm">
+            <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+            Analizando datos de Enkontrol...
+        </div>
+    `;
+    document.getElementById('chatMessages').appendChild(loadingWrapper);
+    document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+    
+    try {
+        const response = await fetch('{% url "econtrol_chat_ia_api" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({ message: message })
+        });
+        
+        const data = await response.json();
+        
+        // Remover indicador de carga
+        document.getElementById('loadingMessage').remove();
+        
+        if (data.success) {
+            appendMessage(data.response, false);
+        } else {
+            appendMessage('Error: ' + (data.error || 'Error desconocido'), false);
+        }
+    } catch (error) {
+        if (document.getElementById('loadingMessage')) document.getElementById('loadingMessage').remove();
+        appendMessage('Error de conexión: ' + error.message, false);
+    }
+    
+    isLoading = false;
+    input.disabled = false;
+    btn.disabled = false;
+    input.focus();
+}
+</script>
+{% endblock %}

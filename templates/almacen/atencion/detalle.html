@@ -1,0 +1,236 @@
+{% extends "almacen/base_almacen.html" %}
+{% block title %}Atender {{ vale.consecutivo }} — ASAP Vales{% endblock %}
+{% block page_title %}
+<a href="{% url 'almacen:bandeja' %}" class="btn btn-sm btn-ghost me-2"><i class="bi bi-arrow-left"></i></a>
+Vale N° {{ vale.consecutivo }}
+<span class="badge badge-est-{{ vale.estado }} ms-2">{{ vale.get_estado_display }}</span>
+{% endblock %}
+{% block nav_bandeja %}active{% endblock %}
+
+{% block content %}
+<div class="card-al p-3 mb-3">
+  <div class="row g-2 small">
+    <div class="col-6 col-md-3"><strong>Fecha emisión:</strong><br />{{ vale.fecha|date:"d/m/Y H:i" }}</div>
+    <div class="col-6 col-md-3"><strong>Movimiento:</strong><br />{{ vale.tipo_movimiento }}{% if vale.tipo_detalle %} ({{ vale.tipo_detalle }}){% endif %}</div>
+    <div class="col-6 col-md-3"><strong>Empresa / Área:</strong><br />{{ vale.empresa|default:"—" }} / {{ vale.area|default:"—" }}</div>
+    <div class="col-6 col-md-3"><strong>Plano / Otro:</strong><br />{{ vale.plano|default:"—" }} {{ vale.dato_otro }}</div>
+    <div class="col-6 col-md-3"><strong>Solicitante:</strong><br />{{ vale.creado_por.nombre }} ({{ vale.creado_por.puesto }})</div>
+    <div class="col-6 col-md-3"><strong>Despachador vigente:</strong><br />
+      {% if vigente %}{{ vigente.asignado_a.nombre }} <span style="color:var(--muted);">desde {{ vigente.fecha|date:"d/m H:i" }}</span>
+      {% else %}<span style="color:var(--muted);">— por asignar —</span>{% endif %}
+    </div>
+  </div>
+  {% if vale.notas %}<div class="mt-2 small"><strong>Nota:</strong><br />{{ vale.notas|linebreaksbr }}</div>{% endif %}
+  {% if vale.motivo_cierre %}<div class="mt-2 small"><strong>Faltante:</strong><br />{{ vale.motivo_cierre|linebreaksbr }}</div>{% endif %}
+
+  <div class="d-flex flex-wrap gap-2 mt-3">
+    {% if encargado and vale.estado != "BORRADOR" %}
+    <button type="button" class="btn btn-sm btn-ghost" data-bs-toggle="modal" data-bs-target="#modalAsignar">
+      <i class="bi bi-send"></i> {% if vigente %}Reasignar{% else %}Asignar{% endif %}
+    </button>
+    {% endif %}
+    {% if operable and vale.estado != "POR_CERRAR" and vale.estado != "BORRADOR" %}
+    <a href="{% url 'almacen:vale_despachar' vale.pk %}" class="btn btn-sm btn-accent">
+      <i class="bi bi-truck"></i> Registrar entrega
+    </a>
+    {% endif %}
+    {% if encargado and vale.estado == "POR_CERRAR" %}
+    <button type="button" class="btn btn-sm btn-accent" data-bs-toggle="modal" data-bs-target="#modalCerrar">
+      <i class="bi bi-check-circle"></i> Cerrar vale
+    </button>
+    {% endif %}
+    {% if encargado and vale.estado != "POR_CERRAR" %}
+    <button type="button" class="btn btn-sm btn-ghost" data-bs-toggle="modal" data-bs-target="#modalFaltante">
+      <i class="bi bi-exclamation-triangle"></i> Cerrar con faltante
+    </button>
+    {% endif %}
+  </div>
+  {% if vale.estado == "POR_CERRAR" %}
+  <div class="alert alert-warning small py-2 mt-3 mb-0">
+    {% if encargado %}Todas las líneas están completas. Revisa el resumen y cierra con tu PIN en la ventana propia de cierre.
+    {% else %}Todas las líneas están completas. Avisa al encargado para que revise y cierre el vale.{% endif %}
+  </div>
+  {% endif %}
+  {% if vale.estado == "CERRADO" or vale.estado == "CERRADO_CON_FALTANTE" %}
+  <div class="d-flex flex-wrap gap-2 mt-3">
+    <a href="{% url 'almacen:vale_imprimir' vale.pk %}" target="_blank" class="btn btn-sm btn-ghost">
+      <i class="bi bi-printer"></i> Imprimir
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<div class="card-al p-0 overflow-hidden mb-3">
+  <div class="p-3 pb-0 fw-semibold">Solicitado vs entregado (solo lectura)</div>
+  <div class="table-responsive">
+    <table class="table-al mb-0">
+      <thead><tr><th>#</th><th>Material</th><th>Solicitado</th><th>Entregado</th><th>Pendiente</th><th>Línea</th></tr></thead>
+      <tbody>
+        {% for d in detalles %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ d.material.descripcion }}</td>
+          <td class="text-nowrap">{{ d.cantidad_solicitada }} {{ d.unidad.abreviatura }}</td>
+          <td class="text-nowrap">{{ d.cantidad_entregada }} {{ d.unidad.abreviatura }}</td>
+          <td class="text-nowrap fw-semibold">{{ d.pendiente }} {{ d.unidad.abreviatura }}</td>
+          <td><span class="badge badge-est-{{ d.estado_linea }}">{{ d.estado_linea }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card-al p-3 mb-3">
+  <div class="fw-semibold mb-2">Entregas</div>
+  {% for e in entregas %}
+  <div class="border rounded p-2 mb-2 small" style="border-color:var(--border) !important;">
+    <div class="d-flex justify-content-between flex-wrap gap-1">
+      <span><strong>{{ e.fecha|date:"d/m/Y H:i" }}</strong> — Entregó: {{ e.entregado_por.nombre|default:e.perfil.nombre }} · Registró: {{ e.perfil.nombre }}</span>
+      <span>
+        <span class="badge {% if e.estado == 'ACTIVA' %}badge-est-CERRADO{% else %}badge-est-ANULADO{% endif %} me-1">{{ e.estado }}</span>
+        {% if encargado and e.estado == "ACTIVA" %}
+        <button type="button" class="btn btn-sm btn-ghost py-0" data-bs-toggle="modal" data-bs-target="#modalAnularE{{ e.pk }}">Anular</button>
+        {% endif %}
+      </span>
+    </div>
+    <ul class="mb-0 mt-1 ps-3">
+      {% for de in e.detalles.all %}
+      <li>{{ de.detalle_vale.material.descripcion }}: {{ de.cantidad }}{% if de.observaciones %} <span style="color:var(--muted);">({{ de.observaciones }})</span>{% endif %}</li>
+      {% endfor %}
+    </ul>
+    {% if e.motivo_anulacion %}<div class="mt-1" style="color:var(--muted);">Motivo: {{ e.motivo_anulacion }}</div>{% endif %}
+  </div>
+
+  {% if encargado and e.estado == "ACTIVA" %}
+  <div class="modal fade" id="modalAnularE{{ e.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content card-al">
+        <form method="post" action="{% url 'almacen:entrega_anular' vale.pk e.pk %}">
+          {% csrf_token %}
+          <div class="modal-body">
+            <h2 class="h6 fw-bold">Anular entrega del {{ e.fecha|date:"d/m H:i" }}</h2>
+            <p class="small" style="color:var(--muted);">Se descuentan los acumulados. Requiere motivo + tu PIN. Se avisa a Gerencia.</p>
+            <textarea name="motivo" class="form-control mb-2" rows="2" required minlength="10" placeholder="Motivo (mín. 10 caracteres)"></textarea>
+            <input type="password" name="pin" class="form-control text-center" maxlength="4" inputmode="numeric" pattern="[0-9]{4}" placeholder="Tu PIN" autocomplete="off" required style="letter-spacing:.5em;" />
+          </div>
+          <div class="modal-footer border-0">
+            <button type="button" class="btn btn-sm btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-sm btn-accent">Anular entrega</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  {% empty %}
+  <p class="small mb-0" style="color:var(--muted);">Sin entregas.</p>
+  {% endfor %}
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <div class="card-al p-3 h-100">
+      <div class="fw-semibold mb-2">Firmas</div>
+      {% for f in firmas_dos %}
+      <div class="small mb-2"><strong>{{ f.get_tipo_display }}</strong> — {{ f.nombre }} ({{ f.puesto }}) · {{ f.fecha|date:"d/m H:i" }}</div>
+      {% empty %}
+      <p class="small mb-0" style="color:var(--muted);">Sin firmas.</p>
+      {% endfor %}
+      <div class="fw-semibold mt-3 mb-2">Asignaciones</div>
+      {% for a in asignaciones %}
+      <div class="small mb-1">{{ a.fecha|date:"d/m H:i" }} — {{ a.asignado_por.nombre }} → {{ a.asignado_a.nombre }}{% if not a.vigente %} <span style="color:var(--muted);">(histórica{% if a.motivo_reasignacion %}: {{ a.motivo_reasignacion }}{% endif %})</span>{% endif %}</div>
+      {% empty %}
+      <p class="small mb-0" style="color:var(--muted);">Sin asignar.</p>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card-al p-3 h-100">
+      <div class="fw-semibold mb-2">Línea de tiempo</div>
+      {% for t in timeline %}
+      <div class="small mb-1"><strong>{{ t.fecha|date:"d/m H:i" }}</strong> — {{ t.evento }}: {{ t.detalle }}</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% if encargado %}
+<div class="modal fade" id="modalAsignar" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:380px;">
+    <div class="modal-content card-al">
+      <form method="post" action="{% url 'almacen:vale_asignar' vale.pk %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <h2 class="h6 fw-bold">{% if vigente %}Reasignar{% else %}Asignar{% endif %} vale {{ vale.consecutivo }}</h2>
+          <label class="form-label">Despachador</label>
+          <select name="despachador_id" class="form-select mb-2" required>
+            <option value="">—</option>
+            {% for d in despachadores %}<option value="{{ d.pk }}" {% if vigente and vigente.asignado_a_id == d.pk %}selected{% endif %}>{{ d.nombre }} ({{ d.puesto }})</option>{% endfor %}
+          </select>
+          {% if vigente %}
+          <label class="form-label">Motivo de reasignación</label>
+          <input type="text" name="motivo" class="form-control" maxlength="255" placeholder="Obligatorio al reasignar" />
+          {% endif %}
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-sm btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-sm btn-accent">Asignar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if encargado and vale.estado == "POR_CERRAR" %}
+<div class="modal fade" id="modalCerrar" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:400px;">
+    <div class="modal-content card-al">
+      <form method="post" action="{% url 'almacen:vale_cerrar' vale.pk %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <h2 class="h6 fw-bold">Resumen final y cierre</h2>
+          <table class="table-al mb-2">
+            <thead><tr><th>Material</th><th>Solicitado</th><th>Entregado</th></tr></thead>
+            <tbody>
+              {% for d in detalles %}
+              <tr><td>{{ d.material.descripcion }}</td><td>{{ d.cantidad_solicitada }}</td><td>{{ d.cantidad_entregada }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          <p class="small" style="color:var(--muted);">Ingresa tu PIN <strong>en esta ventana</strong> para cerrar. Se llenará DESPACHADO POR con tu nombre, puesto y firma.</p>
+          <input type="password" name="pin" class="form-control text-center" maxlength="4" inputmode="numeric" pattern="[0-9]{4}" placeholder="Tu PIN" autocomplete="off" required style="letter-spacing:.5em;font-size:1.3rem;" />
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-sm btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-sm btn-accent"><i class="bi bi-check-circle me-1"></i>Cerrar vale</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if encargado and vale.estado != "POR_CERRAR" %}
+<div class="modal fade" id="modalFaltante" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content card-al">
+      <form method="post" action="{% url 'almacen:vale_cerrar_faltante' vale.pk %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <h2 class="h6 fw-bold">Cerrar con faltante</h2>
+          <p class="small" style="color:var(--muted);">Solo encargado. El faltante queda registrado y se avisa a Gerencia.</p>
+          <textarea name="motivo" class="form-control mb-2" rows="2" required minlength="10" placeholder="Motivo del faltante (mín. 10 caracteres)"></textarea>
+          <input type="password" name="pin" class="form-control text-center" maxlength="4" inputmode="numeric" pattern="[0-9]{4}" placeholder="Tu PIN" autocomplete="off" required style="letter-spacing:.5em;" />
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-sm btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-sm btn-accent">Cerrar con faltante</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

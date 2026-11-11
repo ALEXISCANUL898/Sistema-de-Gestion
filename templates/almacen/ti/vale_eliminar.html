@@ -1,0 +1,62 @@
+{% extends "almacen/ti/base_ti.html" %}
+{% block title %}Eliminar Vale — Panel TI{% endblock %}
+{% block page_title %}Eliminar Vale{% endblock %}
+{% block nav_eliminados %}active{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <a href="javascript:history.back()" class="btn btn-ti-outline btn-sm mb-3"><i class="bi bi-arrow-left"></i> Cancelar</a>
+
+    <div class="alert alert-ti-warning mb-3">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      <strong>¡Atención!</strong> Esta acción <strong>no borra</strong> físicamente el vale, pero lo retira de todas las bandejas y lo marca como eliminado. Requiere PIN y queda en bitácora.
+    </div>
+
+    <!-- Resumen del vale -->
+    <div class="ti-card mb-3">
+      <div class="ti-card-header"><i class="bi bi-receipt me-2" style="color:var(--ti-accent);"></i>Resumen del vale</div>
+      <div class="p-3">
+        <table class="ti-table">
+          <tr><th>N°</th><td><code style="color:var(--ti-accent);">{{ vale.consecutivo }}</code></td></tr>
+          <tr><th>Estado</th><td>{{ vale.get_estado_display }}</td></tr>
+          <tr><th>Creado por</th><td>{{ vale.creado_por.nombre }}</td></tr>
+          <tr><th>Empresa</th><td>{{ vale.empresa|default:"—" }}</td></tr>
+          <tr><th>Fecha</th><td>{{ vale.fecha|date:"d/m/Y H:i" }}</td></tr>
+          <tr><th>Materiales</th><td>{{ vale.detalles.count }} línea(s)</td></tr>
+          <tr><th>Entregas registradas</th><td>{{ vale.entregas.count }}</td></tr>
+        </table>
+        {% if vale.entregas.exists %}
+        <div class="alert alert-ti-warning small mt-2 mb-0 py-2">
+          <i class="bi bi-exclamation-circle me-1"></i>
+          Este vale tiene <strong>{{ vale.entregas.count }}</strong> entrega(s) registrada(s). Quedarán marcadas como "vale anulado".
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Formulario de eliminación -->
+    <div class="ti-card">
+      <div class="ti-card-header"><i class="bi bi-shield-lock me-2" style="color:var(--ti-danger);"></i>Confirmación de eliminación</div>
+      <div class="p-4">
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Motivo de eliminación <span style="color:var(--ti-danger);">*</span></label>
+            <textarea name="motivo" class="form-control" rows="3" minlength="10"
+              placeholder="Describe claramente el motivo (mínimo 10 caracteres)…" required></textarea>
+          </div>
+          <div class="mb-4">
+            <label class="form-label">Tu PIN de confirmación <span style="color:var(--ti-danger);">*</span></label>
+            <input type="password" name="pin" class="form-control form-control-lg text-center"
+              maxlength="4" inputmode="numeric" pattern="[0-9]{4}" placeholder="● ● ● ●" required>
+          </div>
+          <button type="submit" class="btn w-100 fw-bold" style="background:var(--ti-danger);color:#fff;border:none;">
+            <i class="bi bi-trash3 me-1"></i>Confirmar eliminación lógica
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

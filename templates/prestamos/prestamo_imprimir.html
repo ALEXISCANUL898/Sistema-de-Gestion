@@ -1,0 +1,458 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Comprobante de Préstamo — {{ solicitud.folio }}</title>
+    <link
+      href="{% static 'css/bootstrap.min.css' %}"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="{% static 'icons/bootstrap-icons.min.css' %}"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Inter", "Arial", sans-serif;
+        font-size: 11px;
+        color: #0f172a;
+        background: #fff;
+        margin: 0;
+        padding: 0;
+      }
+
+      /* ── Print Page Setup ── */
+      @page {
+        size: A4 portrait;
+        margin: 10mm 15mm 10mm 15mm;
+      }
+      @media print {
+        .no-print {
+          display: none !important;
+        }
+        body {
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
+        }
+      }
+
+      /* ── Layout ── */
+      .print-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 10px 15px;
+      }
+
+      /* ── Header ── */
+      .doc-header {
+        background: #0f172a;
+        border-radius: 6px 6px 0 0;
+        padding: 14px 20px;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .doc-header .org-title {
+        font-size: 15px;
+        font-weight: 700;
+        margin: 0;
+      }
+      .doc-header .doc-subtitle {
+        font-size: 10px;
+        opacity: 0.85;
+        margin-top: 2px;
+      }
+      .folio-badge {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
+        padding: 4px 10px;
+        text-align: center;
+      }
+      .folio-badge .folio-label {
+        font-size: 8px;
+        opacity: 0.8;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .folio-badge .folio-val {
+        font-size: 16px;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        color: #fff;
+      }
+
+      /* ── Body ── */
+      .doc-body {
+        border: 1px solid #cbd5e1;
+        border-top: none;
+        border-radius: 0 0 6px 6px;
+        padding: 15px 20px;
+      }
+      .status-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        padding: 6px 12px;
+        margin-bottom: 12px;
+      }
+      .status-row .reg-date {
+        font-size: 10px;
+        color: #475569;
+      }
+      .estado-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        border: 1px solid #475569;
+        background: #fff;
+        color: #475569;
+      }
+
+      /* ── Sections ── */
+      .sec-title {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #0f172a;
+        border-bottom: 1.5px solid #cbd5e1;
+        padding-bottom: 3px;
+        margin-bottom: 8px;
+        margin-top: 12px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .field-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px 16px;
+        margin-bottom: 4px;
+      }
+      .field-item .field-label {
+        font-size: 8.5px;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .field-item .field-val {
+        font-size: 11px;
+        font-weight: 600;
+        color: #0f172a;
+        margin-top: 1px;
+      }
+
+      /* ── Responsibility Box ── */
+      .resp-box {
+        background: #f8fafc;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        padding: 8px 12px;
+        margin-top: 8px;
+      }
+      .resp-box .resp-title {
+        font-size: 9.5px;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .resp-box .resp-text {
+        font-size: 9px;
+        line-height: 1.4;
+        color: #334155;
+      }
+
+      /* ── Signature section ── */
+      .sig-section {
+        margin-top: 8px;
+        padding: 8px 12px;
+        background: #f8fafc;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+      }
+      .sig-accept {
+        font-size: 9.5px;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 2px;
+      }
+      .sig-meta {
+        font-size: 9px;
+        color: #475569;
+      }
+      .sig-line {
+        border-top: 1px dashed #64748b;
+        margin-top: 20px;
+        padding-top: 3px;
+        text-align: center;
+        font-size: 9px;
+        color: #475569;
+        font-weight: 600;
+      }
+
+      /* ── Footer ── */
+      .doc-footer {
+        margin-top: 10px;
+        text-align: center;
+        font-size: 8px;
+        color: #94a3b8;
+        border-top: 1px solid #e2e8f0;
+        padding-top: 6px;
+      }
+
+      /* ── Print button ── */
+      .btn-print-top {
+        background: #0f172a;
+        color: #fff;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 12px;
+        transition: opacity 0.2s;
+      }
+      .btn-print-top:hover {
+        opacity: 0.9;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Toolbar (no imprime) -->
+    <div
+      class="no-print text-center"
+      style="
+        background: #f8fafc;
+        padding: 12px;
+        border-bottom: 1px solid #e2e8f0;
+      "
+    >
+      <button class="btn-print-top" onclick="window.print()">
+        <i class="bi bi-printer-fill"></i> Imprimir / Guardar como PDF
+      </button>
+      <a
+        href="{% url 'prestamo_comprobante' solicitud.folio %}"
+        style="margin-left: 12px; font-size: 13px; color: #0f172a; text-decoration: none; font-weight: 600;"
+      >
+        ← Volver al comprobante
+      </a>
+    </div>
+
+    <div class="print-container">
+      <!-- Encabezado del documento -->
+      <div class="doc-header">
+        <div>
+          <p class="org-title">
+            Préstamo de Equipos
+          </p>
+          <p class="doc-subtitle">COMPROBANTE OFICIAL DE SOLICITUD</p>
+        </div>
+        <div class="folio-badge">
+          <div class="folio-label">Folio</div>
+          <div class="folio-val">{{ solicitud.folio }}</div>
+        </div>
+      </div>
+
+      <div class="doc-body">
+        <!-- Estado y fecha -->
+        <div class="status-row">
+          <div class="reg-date">
+            <strong>Fecha de Registro:</strong> {{ solicitud.creado_en|date:"d/m/Y H:i:s" }}
+          </div>
+          <div class="estado-badge">
+            {{ solicitud.get_estado_display }}
+          </div>
+        </div>
+
+        <!-- 1. Datos del Solicitante -->
+        <div class="sec-title">
+          <i class="bi bi-person-badge"></i> 1. Datos del Solicitante
+        </div>
+        <div class="field-grid">
+          <div class="field-item" style="grid-column: span 2">
+            <div class="field-label">Nombre Completo</div>
+            <div class="field-val">{{ solicitud.nombre_completo }}</div>
+          </div>
+          <div class="field-item">
+            <div class="field-label">Área / Departamento</div>
+            <div class="field-val">{{ solicitud.area_departamento }}</div>
+          </div>
+          <div class="field-item">
+            <div class="field-label">Puesto</div>
+            <div class="field-val">{{ solicitud.puesto }}</div>
+          </div>
+          <div class="field-item">
+            <div class="field-label">Correo Electrónico</div>
+            <div class="field-val">{{ solicitud.correo }}</div>
+          </div>
+          <div class="field-item">
+            <div class="field-label">Teléfono</div>
+            <div class="field-val">{{ solicitud.telefono }}</div>
+          </div>
+        </div>
+
+        <!-- 2. Datos de la Solicitud -->
+        <div class="sec-title">
+          <i class="bi bi-calendar3"></i> 2. Datos de la Solicitud
+        </div>
+        <div class="field-grid">
+          <div class="field-item">
+            <div class="field-label">Fecha de Inicio de Uso</div>
+            <div class="field-val">
+              {{ solicitud.fecha_inicio_uso|date:"d/m/Y" }}
+            </div>
+          </div>
+          <div class="field-item">
+            <div class="field-label">Fecha de Devolución</div>
+            <div class="field-val">
+              {{ solicitud.fecha_devolucion|date:"d/m/Y" }}
+            </div>
+          </div>
+          <div class="field-item">
+            <div class="field-label">Hora Estimada de Devolución</div>
+            <div class="field-val">
+              {{ solicitud.hora_devolucion|time:"H:i" }} hrs
+            </div>
+          </div>
+          <div class="field-item" style="grid-column: span 3">
+            <div class="field-label">Contratista</div>
+            <div class="field-val">{{ solicitud.contratista }}</div>
+          </div>
+          <div class="field-item" style="grid-column: span 3">
+            <div class="field-label">Motivo de Uso</div>
+            <div class="field-val">{{ solicitud.motivo_uso }}</div>
+          </div>
+        </div>
+
+        <!-- 2.1 Datos del Equipo -->
+        <div class="sec-title">
+          <i class="bi bi-info-circle"></i> 2.1 Datos del Equipo
+        </div>
+        <div class="field-grid">
+          <div class="field-item">
+            <div class="field-label">Equipo</div>
+            <div class="field-val">{{ solicitud.equipo }}</div>
+          </div>
+          <div class="field-item">
+            <div class="field-label">Marca</div>
+            <div class="field-val">{{ solicitud.marca }}</div>
+          </div>
+          <div class="field-item">
+            <div class="field-label">Modelo</div>
+            <div class="field-val">{{ solicitud.modelo_equipo }}</div>
+          </div>
+          <div class="field-item">
+            <div class="field-label">Potencia Nominal</div>
+            <div class="field-val">{{ solicitud.potencia_nominal }}</div>
+          </div>
+          <div class="field-item">
+            <div class="field-label">Tipo de Batería</div>
+            <div class="field-val">{{ solicitud.tipo_bateria }}</div>
+          </div>
+        </div>
+
+        <!-- 3. Cláusula de Responsabilidad -->
+        <div class="sec-title">
+          <i class="bi bi-shield-check"></i> 3. Cláusula de Responsabilidad
+        </div>
+        <div class="resp-box">
+          <div class="resp-title">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i> Términos de Responsabilidad
+          </div>
+          <div class="resp-text">
+            <strong>Yo, {{ solicitud.nombre_completo }}</strong>, titular del
+            puesto de <strong>{{ solicitud.puesto }}</strong> adscrito al área
+            de <strong>{{ solicitud.area_departamento }}</strong>, declaro bajo
+            protesta de decir verdad que: <br /><br />
+            <strong>1.</strong> Me hago responsable del cuidado, uso adecuado y
+            conservación del equipo tecnológico asignado durante el período del
+            <strong>{{ solicitud.fecha_inicio_uso|date:"d/m/Y" }}</strong> al
+            <strong>{{ solicitud.fecha_devolucion|date:"d/m/Y" }}</strong>, con
+            devolución estimada a las
+            <strong>{{ solicitud.hora_devolucion|time:"H:i" }} hrs</strong>.
+            <br /><br />
+            <strong>2.</strong> Me comprometo a devolver el equipo en las mismas
+            condiciones físicas y de funcionamiento en que fue entregado, en la
+            fecha y hora acordadas. <br /><br />
+            <strong>3.</strong> En caso de daño, pérdida, robo o mal uso del
+            equipo —sea por negligencia, descuido o cualquier acto imputable a
+            mi persona— acepto cubrir el costo total de reparación o reposición
+            del bien, conforme al avalúo que determine el área de Tecnologías de
+            Información. <br /><br />
+            <strong>4.</strong> El equipo será utilizado exclusivamente para
+            fines institucionales relacionados con:
+            <em>{{ solicitud.motivo_uso }}</em>, por parte del contratista:
+            <em>{{ solicitud.contratista }}</em>. <br /><br />
+            <strong>5.</strong> El incumplimiento puede derivar en
+            responsabilidades administrativas y/o disciplinarias de acuerdo con
+            las políticas internas de la organización.
+          </div>
+        </div>
+
+        <!-- 4. Firma digital -->
+        <div class="sig-section">
+          <div class="sig-accept">
+            <i class="bi bi-check-circle-fill me-1" style="color: #0f172a"></i>
+            Cláusula de Responsabilidad Aceptada Digitalmente
+          </div>
+          <div class="sig-meta">
+            El solicitante aceptó los términos el día
+            <strong>{{ solicitud.fecha_hora_aceptacion|date:"d/m/Y" }}</strong>
+            a las <strong>{{ solicitud.fecha_hora_aceptacion|time:"H:i:s" }}</strong>
+            hrs, mediante el sistema de gestión interno (folio <strong>{{ solicitud.folio }}</strong>).
+          </div>
+        </div>
+
+        <!-- Líneas de firma -->
+        <div class="row mt-4">
+          <div class="col-5 text-center">
+            <div class="sig-line">Firma del Solicitante</div>
+            <div style="font-size: 9px; margin-top: 2px; color: #475569">
+              {{ solicitud.nombre_completo }}
+            </div>
+          </div>
+          <div class="col-2"></div>
+          <div class="col-5 text-center">
+            <div class="sig-line">Entrego</div>
+            <div style="font-size: 9px; margin-top: 2px; color: #475569">
+              Eduardo Alonzo Martin Chuc
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- end doc-body -->
+
+      <div class="doc-footer">
+        Documento generado por el sistema el {{ solicitud.creado_en|date:"d/m/Y H:i:s" }} — Folio: {{ solicitud.folio }} — Este comprobante tiene validez institucional.
+      </div>
+    </div>
+    <!-- end print-container -->
+
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+  </body>
+</html>

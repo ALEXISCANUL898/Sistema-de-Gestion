@@ -1,0 +1,49 @@
+{% extends "almacen/ti/base_ti.html" %}
+{% block title %}Empresas — Panel TI{% endblock %}
+{% block page_title %}Empresas{% endblock %}
+{% block nav_empresas %}active{% endblock %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="ti-card">
+      <div class="ti-card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-building me-2" style="color:var(--ti-accent);"></i>Empresas ({{ page_obj.paginator.count }})</span>
+        <form method="get" class="d-flex gap-2">
+          <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Buscar…" style="width:150px;">
+          <button class="btn btn-ti btn-sm">Buscar</button>
+        </form>
+      </div>
+      <table class="ti-table">
+        <thead><tr><th>#</th><th>Nombre</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <tbody>
+          {% for obj in page_obj %}
+          <tr>
+            <td style="color:var(--ti-muted);font-size:.8rem;">{{ obj.pk }}</td>
+            <td>{{ obj.nombre }}</td>
+            <td>{% if obj.activa %}<span class="badge badge-activo rounded-pill">Activa</span>{% else %}<span class="badge badge-inactivo rounded-pill">Inactiva</span>{% endif %}</td>
+            <td>
+              <div class="d-flex gap-1">
+                <a href="{% url 'catalogos:empresa_editar' obj.pk %}" class="btn btn-ti-outline btn-sm"><i class="bi bi-pencil"></i></a>
+                <a href="{% url 'catalogos:empresa_toggle' obj.pk %}" class="btn btn-sm {{ obj.activa|yesno:'btn-ti-outline,btn-ti' }}"><i class="bi {{ obj.activa|yesno:'bi-toggle-on,bi-toggle-off' }}"></i></a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}<tr><td colspan="4" class="text-center py-4" style="color:var(--ti-muted);">Sin registros.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+      {% include "almacen/ti/catalogos/_paginacion.html" %}
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="ti-card">
+      <div class="ti-card-header"><i class="bi bi-plus-circle me-2" style="color:var(--ti-accent);"></i>Nueva empresa</div>
+      <div class="p-3">
+        <form method="post" novalidate>{% csrf_token %}
+          {% for field in form %}<div class="mb-3"><label class="form-label">{{ field.label }}</label>{{ field }}{% if field.errors %}<div class="small mt-1" style="color:var(--ti-danger);">{{ field.errors|join:", " }}</div>{% endif %}</div>{% endfor %}
+          <button type="submit" class="btn btn-ti w-100"><i class="bi bi-save me-1"></i>Guardar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

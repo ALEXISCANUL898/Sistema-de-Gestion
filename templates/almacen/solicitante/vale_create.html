@@ -1,0 +1,372 @@
+{% extends "almacen/base_almacen.html" %}
+
+{% block title %}{% if vale %}Editar borrador{% else %}Nuevo vale{% endif %} — ASAP Vales{% endblock %}
+{% block page_title %}
+<a href="{% if vale %}{% url 'almacen:vale_detalle' vale.pk %}{% else %}{% url 'almacen:mis_vales' %}{% endif %}" class="btn btn-sm btn-ghost me-2"><i class="bi bi-arrow-left"></i></a>
+{% if vale %}Editar borrador{% else %}Nuevo vale de salida{% endif %}
+{% endblock %}
+{% block nav_misvales %}active{% endblock %}
+
+{% block content %}
+<form method="post" id="vale-form" autocomplete="off">
+  {% csrf_token %}
+  <input type="hidden" name="pin" id="pin-hidden" value="" />
+
+  <div class="card-al p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+      <span class="fw-semibold"><i class="bi bi-card-heading me-1"></i>VALE DE SALIDA</span>
+      <span class="small" style="color:var(--muted);">Fecha: {{ hoy|date:"d / m / Y" }}</span>
+    </div>
+
+    <div class="mb-2">
+      <div class="form-label mb-1">Tipo de movimiento</div>
+      <div class="d-flex flex-wrap gap-3">
+        {% for valor, etiqueta in movimientos %}
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="tipo_movimiento" id="tm_{{ forloop.counter }}"
+                 value="{{ valor }}" {% if tipo_movimiento|default:"Salida de material" == valor %}checked{% endif %} />
+          <label class="form-check-label small" for="tm_{{ forloop.counter }}">{{ etiqueta }}</label>
+        </div>
+        {% endfor %}
+      </div>
+      <input type="text" name="tipo_detalle" id="tipo_detalle" class="form-control mt-2"
+             placeholder="Especifique el tipo de movimiento…" maxlength="100"
+             value="{{ tipo_detalle|default:'' }}" style="max-width:420px;" />
+    </div>
+
+    <div class="row g-2">
+      <div class="col-md-4">
+        <label class="form-label">Empresa <span style="color:var(--ti-danger,#da3633);">*</span></label>
+        <select name="empresa" id="sel-empresa" class="form-select" required>
+          <option value="">— Selecciona —</option>
+          {% for e in empresas %}
+          <option value="{{ e.pk }}" {% if e.pk|stringformat:"s" == empresa_id %}selected{% endif %}>{{ e.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Área <span style="color:var(--ti-danger,#da3633);">*</span></label>
+        <select name="area" id="sel-area" class="form-select" required>
+          <option value="">— Selecciona —</option>
+          {% for a in areas %}
+          <option value="{{ a.pk }}" {% if a.pk|stringformat:"s" == area_id %}selected{% endif %}>{{ a.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Plano <span style="color:var(--ti-danger,#da3633);">*</span></label>
+        <select name="plano" id="sel-plano" class="form-select" required>
+          <option value="">— Selecciona —</option>
+          {% for p in planos %}
+          <option value="{{ p.pk }}" {% if p.pk|stringformat:"s" == plano_id %}selected{% endif %}>{{ p.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Otro (campo libre)</label>
+        <input type="text" name="dato_otro" class="form-control" maxlength="255"
+               placeholder="Empresa / Área / Plano u otro dato…" value="{{ dato_otro|default:'' }}" />
+      </div>
+    </div>
+  </div>
+
+  <div class="card-al p-0 overflow-hidden mb-3">
+    <div class="p-3 pb-2 d-flex justify-content-between align-items-center">
+      <span class="fw-semibold"><i class="bi bi-box-seam me-1"></i>Materiales (máx. {{ max_filas }})</span>
+      <button type="button" class="btn btn-sm btn-ghost" id="btn-add-row">
+        <i class="bi bi-plus-circle"></i> Agregar fila
+      </button>
+    </div>
+    <div class="table-responsive">
+      <table class="table-al mb-0">
+        <thead><tr><th style="width:36px;">#</th><th style="width:110px;">Folio</th><th>Descripción</th><th style="width:130px;">Cantidad</th><th style="width:150px;">Unidad</th><th style="width:44px;"></th></tr></thead>
+        <tbody id="filas-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Panel buscador de materiales (overlay) -->
+  <div class="modal fade" id="modalBuscarMat" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content card-al">
+        <div class="modal-body">
+          <h2 class="h6 fw-bold"><i class="bi bi-search me-1"></i>Buscar material por folio o nombre</h2>
+          <input type="text" id="mat-q" class="form-control" placeholder="Ej. PUER, MAT-0001…" autocomplete="off" />
+          <div id="mat-results" class="list-group mt-2" style="max-height:280px;overflow-y:auto;"></div>
+          <div id="mat-hint" class="small mt-2" style="color:var(--muted);">Escribe al menos 2 letras.</div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-sm btn-ghost" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-al p-3 mb-3">
+    <label class="form-label" for="notas">Nota</label>
+    <textarea name="notas" id="notas" class="form-control" rows="2">{{ notas|default:'' }}</textarea>
+  </div>
+
+  <div class="card-al p-3 mb-3">
+    <div class="fw-semibold mb-2">Firmas</div>
+    <div class="row g-2">
+      <div class="col-md-6">
+        <div class="border rounded p-3 text-center h-100" style="border-color:var(--border) !important;">
+          <div class="small fw-semibold mb-1">RETIRADO POR (solicitante)</div>
+          {% if perfil.firma %}
+          <img src="{{ perfil.firma.url }}" alt="Firma" style="max-height:70px;max-width:100%;" />
+          {% else %}
+          <div class="small py-2" style="color:var(--muted);">(Sin firma cargada — pídele a TI que la registre)</div>
+          {% endif %}
+          <div class="small mt-1"><strong>{{ perfil.nombre }}</strong><br />
+            <span style="color:var(--muted);">{{ perfil.puesto }}</span></div>
+          <div class="small mt-1" style="color:var(--muted);">Se estampa automáticamente al firmar con tu PIN.</div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="border rounded p-3 text-center h-100" style="border-color:var(--border) !important;border-style:dashed !important;">
+          <div class="small fw-semibold mb-1">DESPACHADO POR (almacén)</div>
+          <div class="small py-3" style="color:var(--muted);">Lo llena almacén al cerrar el vale.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2 mb-4">
+    {% if vale %}
+    <button type="submit" class="btn btn-accent flex-grow-1">
+      <i class="bi bi-save me-1"></i>Actualizar borrador
+    </button>
+    {% else %}
+    <div id="alerta-cierre" class="alert alert-danger small py-2 d-none"></div>
+    <button type="button" class="btn btn-accent flex-grow-1" id="btn-terminar">
+      <i class="bi bi-save me-1"></i>Terminar vale
+    </button>
+    {% endif %}
+  </div>
+</form>
+
+<div class="modal fade" id="modalDestino" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:400px;">
+    <div class="modal-content card-al">
+      <div class="modal-body text-center">
+        <h2 class="h6 fw-bold">¿Qué hacer con el vale?</h2>
+        <p class="small" style="color:var(--muted);">Guárdalo como borrador para seguir después, o fírmalo ahora y envíalo a almacén.</p>
+        <div class="d-grid gap-2">
+          <button type="button" class="btn btn-ghost" id="btn-solo-borrador">
+            <i class="bi bi-file-earmark me-1"></i>Dejar como borrador
+          </button>
+          <div class="border rounded p-2" style="border-color:var(--border) !important;">
+            {% if pin_error %}
+            <div class="alert alert-danger small py-2" id="pin-alert">
+              <i class="bi bi-x-circle-fill me-1"></i>{{ pin_error }}
+            </div>
+            {% endif %}
+            <input type="password" id="pin-envio" class="form-control text-center mb-2" maxlength="4"
+                   inputmode="numeric" pattern="[0-9]{4}" placeholder="Tu PIN" autocomplete="off"
+                   style="letter-spacing:.5em;font-size:1.2rem;" />
+            <button type="button" class="btn btn-accent w-100" id="btn-firmar-enviar">
+              <i class="bi bi-send me-1"></i>Firmar y enviar a almacén
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-sm btn-ghost" data-bs-dismiss="modal">Seguir editando</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ filas_json|json_script:"filas-data" }}
+<script>
+  // Unidades desde el servidor
+  const UNIDADES = [
+    {% for u in unidades %}{"id": {{ u.pk }}, "nombre": "{{ u.nombre|escapejs }}", "abrev": "{{ u.abreviatura|default:''|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}
+  ];
+  const MAX_FILAS = {{ max_filas|default:12 }};
+  const BUSCAR_URL = "{% url 'almacen:material_buscar' %}";
+  const body = document.getElementById('filas-body');
+  let initial = [];
+  try {
+    const el = document.getElementById('filas-data');
+    const parsed = el && el.textContent.trim() ? JSON.parse(el.textContent) : [];
+    initial = Array.isArray(parsed) ? parsed : [];
+  } catch (e) { initial = []; }
+  {% if raw_mid %}
+  {# legado: ya no se usa (el servidor resuelve las filas con _filas_desde_raw) #}
+  {% endif %}
+
+  function unidadOptions(sel) {
+    let h = '<option value="">—</option>';
+    UNIDADES.forEach(u => {
+      h += `<option value="${u.id}"${String(u.id) === String(sel) ? ' selected' : ''}>${u.nombre}${u.abrev ? ' (' + u.abrev + ')' : ''}</option>`;
+    });
+    return h;
+  }
+  function esc(s) { return String(s || '').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+  function addRow(data) {
+    if (body.rows.length >= MAX_FILAS) return;
+    data = data || {"material_id": "", "folio": "", "material": "", "cantidad": "", "unidad_id": ""};
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td class="idx text-center" style="color:var(--muted);"></td>' +
+      `<td><code class="folio-txt">${esc(data.folio) || '—'}</code><input type="hidden" name="material_id[]" value="${esc(data.material_id)}" /></td>` +
+      `<td><span class="desc-txt">${esc(data.material) || '<span style="color:var(--muted);">Sin seleccionar</span>'}</span><br />` +
+      '<button type="button" class="btn btn-sm btn-ghost btn-buscar mt-1"><i class="bi bi-search"></i> Buscar</button></td>' +
+      `<td><input type="number" name="cantidad[]" class="form-control form-control-sm" min="0.01" step="0.01" value="${esc(data.cantidad)}" placeholder="0.00" /></td>` +
+      `<td><select name="unidad[]" class="form-select form-select-sm">${unidadOptions(data.unidad_id)}</select></td>` +
+      '<td class="text-center"><button type="button" class="btn btn-sm btn-ghost btn-del-row" title="Quitar"><i class="bi bi-x-lg"></i></button></td>';
+    body.appendChild(tr);
+    renumber();
+    tr.querySelector('.btn-del-row').addEventListener('click', () => { tr.remove(); renumber(); });
+    tr.querySelector('.btn-buscar').addEventListener('click', () => abrirBuscador(tr));
+  }
+  function setMaterial(tr, m) {
+    tr.querySelector('input[name="material_id[]"]').value = m.id;
+    tr.querySelector('.folio-txt').textContent = m.folio || '—';
+    const d = tr.querySelector('.desc-txt');
+    d.textContent = m.descripcion;
+    d.dataset.ok = '1';
+    if (m.unidad_id) tr.querySelector('select').value = String(m.unidad_id);
+  }
+  // ── Panel buscador ──
+  let filaActiva = null;
+  const modalEl = document.getElementById('modalBuscarMat');
+  let modal = null;
+  try {
+    if (window.bootstrap && modalEl) modal = new bootstrap.Modal(modalEl);
+  } catch (e) { modal = null; }
+  const matQ = document.getElementById('mat-q');
+  const matRes = document.getElementById('mat-results');
+  const matHint = document.getElementById('mat-hint');
+  let timer = null;
+  function abrirBuscador(tr) {
+    filaActiva = tr;
+    if (!modal) { alert('No se pudo abrir el buscador (Bootstrap no cargó). Revisa tu conexión e intenta de nuevo.'); return; }
+    matQ.value = '';
+    matRes.innerHTML = '';
+    matHint.textContent = 'Escribe al menos 2 letras.';
+    modal.show();
+    setTimeout(() => matQ.focus(), 300);
+  }
+  matQ.addEventListener('input', () => {
+    clearTimeout(timer);
+    const q = matQ.value.trim();
+    if (q.length < 2) { matRes.innerHTML = ''; matHint.textContent = 'Escribe al menos 2 letras.'; return; }
+    matHint.textContent = 'Buscando…';
+    timer = setTimeout(() => {
+      fetch(`${BUSCAR_URL}?q=${encodeURIComponent(q)}`, {headers: {"X-Requested-With": "XMLHttpRequest"}})
+        .then(r => r.json())
+        .then(j => {
+          const res = j.resultados || [];
+          matHint.textContent = res.length ? `${res.length} resultado(s).` : 'Sin resultados. Pide a TI que registre el material.';
+          matRes.innerHTML = '';
+          res.forEach(m => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'list-group-item list-group-item-action';
+            b.style.cssText = 'background:var(--surface2);color:var(--text);border-color:var(--border);';
+            b.innerHTML = `<strong>${esc(m.folio)}</strong> — ${esc(m.descripcion)} <span style="color:var(--muted);">(${esc(m.unidad || '')})</span>`;
+            b.addEventListener('click', () => {
+              if (filaActiva) setMaterial(filaActiva, m);
+              modal.hide();
+            });
+            matRes.appendChild(b);
+          });
+        })
+        .catch(() => { matHint.textContent = 'Error de conexión.'; });
+    }, 250);
+  });
+  function renumber() {
+    [...body.rows].forEach((r, i) => { r.querySelector('.idx').textContent = i + 1; });
+  }
+  document.getElementById('btn-add-row').addEventListener('click', () => addRow());
+
+  // filas iniciales
+  if (initial.length) initial.forEach(addRow);
+  else for (let i = 0; i < Math.min(4, MAX_FILAS); i++) addRow();
+
+  // exigir material seleccionado en cada fila con cantidad
+  document.getElementById('vale-form').addEventListener('submit', e => {
+    let mal = false;
+    [...body.rows].forEach(tr => {
+      const mid = tr.querySelector('input[name="material_id[]"]').value;
+      const cant = tr.querySelector('input[name="cantidad[]"]').value;
+      if ((mid && !cant) || (!mid && cant)) { mal = true; tr.style.outline = '1px solid var(--ti-danger, #da3633)'; }
+      else tr.style.outline = '';
+    });
+    if (mal) { e.preventDefault(); alert('Cada fila debe tener material del catálogo y cantidad, o estar vacía.'); }
+  });
+
+  // ── Destino final: borrador o envío directo ──
+  const form = document.getElementById('vale-form');
+  const pinHidden = document.getElementById('pin-hidden');
+  const pinEnvio = document.getElementById('pin-envio');
+  const alertaCierre = document.getElementById('alerta-cierre');
+  const selEmp = document.getElementById('sel-empresa');
+  const selArea = document.getElementById('sel-area');
+  const selPlano = document.getElementById('sel-plano');
+  function validarCierre() {
+    const faltan = [];
+    [[selEmp, 'empresa'], [selArea, 'área'], [selPlano, 'plano']].forEach(([sel, nom]) => {
+      if (sel && !sel.value) { faltan.push(nom); sel.style.borderColor = '#da3633'; }
+      else if (sel) sel.style.borderColor = '';
+    });
+    let filaOk = false;
+    [...body.rows].forEach(tr => {
+      const mid = tr.querySelector('input[name="material_id[]"]').value;
+      const cant = tr.querySelector('input[name="cantidad[]"]').value;
+      if (mid && cant && parseFloat(cant) > 0) filaOk = true;
+    });
+    if (!filaOk) faltan.push('al menos un material con cantidad');
+    if (faltan.length && alertaCierre) {
+      alertaCierre.classList.remove('d-none');
+      alertaCierre.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-1"></i>Falta por capturar: <strong>${faltan.join(', ')}</strong>.`;
+      alertaCierre.scrollIntoView({behavior: 'smooth', block: 'center'});
+      return false;
+    }
+    if (alertaCierre) alertaCierre.classList.add('d-none');
+    return true;
+  }
+  document.getElementById('btn-terminar')?.addEventListener('click', () => {
+    if (!validarCierre()) return;
+    try { new bootstrap.Modal(document.getElementById('modalDestino')).show(); }
+    catch (e) {}
+  });
+  {% if abrir_destino %}
+  // Reabrir el diálogo con el error de PIN (se conserva lo capturado)
+  try {
+    new bootstrap.Modal(document.getElementById('modalDestino')).show();
+    setTimeout(() => pinEnvio.focus(), 400);
+  } catch (e) {}
+  {% endif %}
+  document.getElementById('btn-solo-borrador').addEventListener('click', () => {
+    if (!validarCierre()) { try { bootstrap.Modal.getInstance(document.getElementById('modalDestino')).hide(); } catch (e) {} return; }
+    pinHidden.value = '';
+    form.action = '';
+    form.requestSubmit();
+  });
+  document.getElementById('btn-firmar-enviar').addEventListener('click', () => {
+    const pin = (pinEnvio.value || '').replace(/\D/g, '');
+    if (pin.length !== 4) { pinEnvio.focus(); pinEnvio.style.borderColor = '#da3633'; return; }
+    if (!validarCierre()) { try { bootstrap.Modal.getInstance(document.getElementById('modalDestino')).hide(); } catch (e) {} return; }
+    pinHidden.value = pin;
+    form.action = "{% url 'almacen:vale_create_emitir' %}";
+    form.requestSubmit();
+  });
+
+  // mostrar/ocultar "especifique"
+  const radios = document.querySelectorAll('input[name="tipo_movimiento"]');
+  const det = document.getElementById('tipo_detalle');
+  function toggleDet() {
+    const v = document.querySelector('input[name="tipo_movimiento"]:checked');
+    det.style.display = (v && v.value === 'Otro') ? '' : 'none';
+    if (v && v.value !== 'Otro') det.value = '';
+  }
+  radios.forEach(r => r.addEventListener('change', toggleDet));
+  toggleDet();
+</script>
+{% endblock %}

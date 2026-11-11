@@ -1,0 +1,261 @@
+{% extends 'soporte/base.html' %}
+{% load custom_filters %}
+
+{% block title %}Ticket #{{ ticket.id }}{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col mt-4">
+        <a href="{% if request.user.is_superuser %}{% url 'support_dashboard' %}{% else %}{% url 'listikets' %}{% endif %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver a la Lista
+        </a>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header text-white" style="background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h5 mb-0">Ticket #{{ ticket.id }}</h1>
+                <small>{{ ticket.title }}</small>
+            </div>
+            <div>
+                <span class="badge bg-danger">{{ ticket.priority }}</span>
+                <span id="status-badge" class="badge-estado badge-estado--{% if ticket.status == 'Abierto' %}abierto{% elif ticket.status == 'En Progreso' %}progreso{% else %}cerrado{% endif %}">
+                    {% if '[RESOLUTION_PROPOSAL]' in ticket.messages.last.message %}Esperando Confirmación{% else %}{{ ticket.status }}{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <h2 class="h6"><strong>Descripción</strong></h2>
+        <p class="mb-1">{{ ticket.description|linebreaksbr }}</p>
+        <hr>
+        
+        {% if ticket.ai_summary %}
+        <div class="alert alert-info py-2 px-3 mb-3 d-flex align-items-center gap-2">
+            <i class="bi bi-robot fs-5 text-primary"></i> 
+            <span><strong>Resumen IA:</strong> <span id="ia-summary-text">{{ ticket.ai_summary }}</span></span>
+        </div>
+        <hr>
+        {% elif analisis_pendiente %}
+        <div class="alert alert-warning py-2 px-3 mb-3 d-flex align-items-center gap-2">
+            <i class="bi bi-hourglass-split fs-5"></i>
+            <span>La IA está clasificando este ticket, aparecerá aquí en breve.</span>
+        </div>
+        <hr>
+        {% endif %}
+
+        <div class="row">
+            <div class="col-md-6">
+                <small class="text-muted">
+                    <i class="bi bi-person"></i> Usuario: {{ ticket.usuario }}<br>
+                    <i class="bi bi-envelope"></i> Email: {{ ticket.email|default:"No registrado" }}<br>
+                    <i class="bi bi-tags"></i> Categoría: {{ ticket.category|default:"General" }}
+                </small>
+            </div>
+            <div class="col-md-6">
+                <small class="text-muted">
+                    <i class="bi bi-calendar"></i> Creado: {{ ticket.created_at|date:"d/m/Y H:i" }}<br>
+                    <i class="bi bi-clock-history"></i> Actualizado: {{ ticket.updated_at|date:"d/m/Y H:i" }}<br>
+                    <i class="bi bi-bar-chart"></i> Nivel: {{ ticket.nivel }}
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-light">
+        <h6 class="mb-0"><i class="bi bi-chat-dots"></i> Conversación</h6>
+    </div>
+    <div class="card-body" id="messages-container" style="max-height: 400px; overflow-y: auto;">
+        {% for msg in ticket_messages %}
+        <div class="p-3 mb-3 rounded 
+            {% if '✅' in msg.message or '🏁' in msg.message or '[USER_CONFIRMED]' in msg.message or '[AUTO_CLOSED]' in msg.message %}bg-success bg-opacity-10
+            {% elif '[RESOLUTION_PROPOSAL]' in msg.message %}bg-warning bg-opacity-10
+            {% elif msg.sender == 'agent' or msg.sender == 'ai' or msg.sender == 'system' %}bg-light
+            {% else %}bg-primary bg-opacity-10{% endif %}"
+            {% if '✅' in msg.message or '🏁' in msg.message or '[USER_CONFIRMED]' in msg.message or '[AUTO_CLOSED]' in msg.message %}style="border-left: 4px solid #28a745;"
+            {% elif '[RESOLUTION_PROPOSAL]' in msg.message %}style="border-left: 4px solid #ffc107;"{% endif %}>
+            
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <small class="text-muted">
+                    <strong>
+                        {% if '✅' in msg.message or '🏁' in msg.message or '[USER_CONFIRMED]' in msg.message or '[AUTO_CLOSED]' in msg.message %}Sistema — Cierre
+                        {% elif '[RESOLUTION_PROPOSAL]' in msg.message %}Propuesta — Equipo TI
+                        {% elif msg.sender == 'ai' %}Asistente
+                        {% elif msg.sender == 'agent' %}Agente de Soporte
+                        {% elif msg.sender == 'system' %}Sistema
+                        {% else %}{{ ticket.usuario }}{% endif %}
+                    </strong>
+                </small>
+                <small class="text-muted" style="font-size: 0.75rem;">{{ msg.created_at|date:"d/m/Y H:i" }}</small>
+            </div>
+            <p class="mb-0 mt-1">{{ msg.message|clean_message|linebreaksbr }}</p>
+        </div>
+        {% empty %}
+        <p class="text-muted text-center">No hay mensajes todavía</p>
+        {% endfor %}
+    </div>
+    <div class="card-footer">
+        <form id="response-form" method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <textarea class="form-control" id="response-message" name="message" rows="3" placeholder="Escribe tu respuesta..."></textarea>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary" id="btn-send">
+                    <i class="bi bi-send"></i> Enviar Respuesta
+                </button>
+                {% if ticket.status != 'Cerrado' %}
+                <button type="button" class="btn btn-danger" id="btn-close-ticket">
+                    <i class="bi bi-x-circle"></i> Cerrar Ticket
+                </button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const ticketId = {{ ticket.id }};
+    const messagesContainer = document.getElementById('messages-container');
+    const statusBadge = document.querySelector('.badge.bg-{% if ticket.status == "Abierto" %}warning{% elif ticket.status == "En Progreso" %}info{% else %}success{% endif %}');
+    let lastMessageCount = {{ ticket_messages|length }};
+
+    function getMessages() {
+        fetch(`/api/tickets/${ticketId}/messages/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) return;
+
+                // Solo renderizar si el número de mensajes cambió
+                if (data.messages.length !== lastMessageCount) {
+                    lastMessageCount = data.messages.length;
+                    renderMessages(data.messages);
+                }
+
+                // Actualizar estado del ticket si cambió
+                if (data.ticket_status !== '{{ ticket.status }}') {
+                    const badge = document.getElementById('status-badge');
+                    if (badge) {
+                        badge.textContent = data.ticket_status;
+                        let estado = 'badge-estado--cerrado';
+                        if (data.ticket_status === 'Abierto') estado = 'badge-estado--abierto';
+                        if (data.ticket_status === 'En Progreso') estado = 'badge-estado--progreso';
+                        badge.className = `badge-estado ${estado}`;
+                    }
+                }
+            })
+            .catch(error => console.error('Error fetching messages:', error));
+    }
+
+    function renderMessages(messages) {
+        let html = '';
+        messages.forEach(msg => {
+            const isAgent = msg.sender === 'agent' || msg.sender === 'ai' || msg.sender === 'system';
+            const isConfirmed = msg.message_type === 'confirmed' || msg.message.includes('✅') || msg.message.includes('🏁');
+            
+            let bgColor = isAgent ? 'bg-light' : 'bg-primary bg-opacity-10';
+            let borderStyle = '';
+            
+            if (isConfirmed) {
+                bgColor = 'bg-success bg-opacity-10';
+                borderStyle = 'border-left: 4px solid #28a745;';
+            } else if (msg.message_type === 'proposal') {
+                bgColor = 'bg-warning bg-opacity-10';
+                borderStyle = 'border-left: 4px solid #ffc107;';
+            }
+
+            // Simple markdown bold replacement
+            let formattedMessage = msg.message
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n/g, '<br>');
+            
+            html += `
+                <div class="p-3 mb-3 rounded ${bgColor}" style="${borderStyle}">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <small class="text-muted"><strong>${msg.sender_label}</strong></small>
+                        <small class="text-muted" style="font-size: 0.75rem;">${msg.created_at}</small>
+                    </div>
+                    <p class="mb-0 mt-1">${formattedMessage}</p>
+                </div>
+            `;
+        });
+
+        if (messages.length === 0) {
+            html = '<p class="text-muted text-center">No hay mensajes todavía</p>';
+        }
+
+        messagesContainer.innerHTML = html;
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    document.getElementById('response-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const messageInput = document.getElementById('response-message');
+        const content = messageInput.value.trim();
+
+        if (!content) return;
+
+        const btnSend = document.getElementById('btn-send');
+        btnSend.disabled = true;
+        btnSend.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Enviando...';
+
+        fetch(`/api/tickets/${ticketId}/responder/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ contenido: content })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                messageInput.value = '';
+                getMessages();
+            } else {
+                alert('Error al enviar mensaje: ' + (data.error || 'Desconocido'));
+            }
+        })
+        .finally(() => {
+            btnSend.disabled = false;
+            btnSend.innerHTML = '<i class="bi bi-send"></i> Enviar Respuesta';
+        });
+    });
+
+    const btnClose = document.getElementById('btn-close-ticket');
+    if (btnClose) {
+        btnClose.addEventListener('click', function() {
+            if (!confirm('¿Estás seguro de que deseas cerrar este ticket?')) return;
+
+            btnClose.disabled = true;
+            btnClose.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Cerrando...';
+
+            fetch(`/api/tickets/${ticketId}/cerrar/`, {
+                method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                      'X-CSRFToken': '{{ csrf_token }}'
+                  }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    btnClose.style.display = 'none';
+                    getMessages();
+                } else {
+                    alert('Error al cerrar ticket: ' + (data.error || 'Desconocido'));
+                    btnClose.disabled = false;
+                    btnClose.innerHTML = '<i class="bi bi-x-circle"></i> Cerrar Ticket';
+                }
+            });
+        });
+    }
+
+    setInterval(() => { if (!document.hidden) getMessages(); }, 30000);
+    getMessages();
+</script>
+{% endblock %}

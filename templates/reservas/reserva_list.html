@@ -1,0 +1,298 @@
+{% extends "reservas/base_reservas.html" %} {% block title %}
+{% if is_history %}Historial de Reservas{% else %}Reservaciones de Salas{% endif %}
+{% endblock %} {% block content %}
+<div class="container py-4">
+  <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+    <h1 class="fw-bold mb-0" style="color: #1e3a5f; font-size: clamp(1.5rem, 5vw, 2.3rem);">
+      <i class="bi {% if is_history %}bi-clock-history{% else %}bi-calendar-check{% endif %} me-2"></i>
+      {% if is_history %}Historial de Reservas (Vencidas){% else %}Reservaciones Activas{% endif %}
+    </h1>
+    <a
+      href="{% url 'reserva_create' %}"
+      class="btn btn-primary btn-lg shadow-sm w-100 w-sm-auto text-nowrap text-center"
+      style="
+        background: linear-gradient(135deg, #2c5282 0%, #1e3a5f 100%);
+        border: none;
+      "
+    >
+      <i class="bi bi-plus-lg me-1"></i> Nueva Reservación
+    </a>
+  </div>
+
+  {% if messages %} {% for message in messages %}
+  <div
+    class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm"
+    role="alert"
+  >
+    {{ message }}
+    <button
+      type="button"
+      class="btn-close"
+      data-bs-dismiss="alert"
+      aria-label="Close"
+    ></button>
+  </div>
+  {% endfor %} {% endif %}
+
+  <div class="row">
+    <div class="col-md-12">
+      <div
+        class="card border-0 shadow-lg"
+        style="
+          border-radius: 15px;
+          overflow: hidden;
+          background: rgba(255, 255, 255, 0.9);
+          backdrop-filter: blur(10px);
+        "
+      >
+        <div class="card-body p-0">
+          <div class="table-responsive d-none d-md-block">
+            <table class="table table-hover mb-0">
+              <thead style="background: #f8fafc">
+                <tr>
+                  <th class="px-4 py-3 border-0">Sala</th>
+                  <th class="px-4 py-3 border-0">Fecha</th>
+                  <th class="px-4 py-3 border-0">Horario</th>
+                  <th class="px-4 py-3 border-0">Responsable</th>
+                  <th class="px-4 py-3 border-0">Departamento</th>
+                  <th class="px-4 py-3 border-0">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for reserva in reservas %}
+                <tr style="transition: all 0.3s ease">
+                  <td class="px-4 py-3 align-middle">
+                    <span
+                      class="badge {% if reserva.sala == 'SALA_1' %}bg-primary{% else %}bg-info{% endif %} rounded-pill px-3"
+                    >
+                      {{ reserva.get_sala_display }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 align-middle fw-semibold text-dark">
+                    {{ reserva.fecha|date:"d/m/Y" }}
+                  </td>
+                  <td class="px-4 py-3 align-middle text-muted">
+                    <i class="bi bi-clock me-1"></i> {{ reserva.hora_inicio|time:"H:i" }} - {{ reserva.hora_fin|time:"H:i" }}
+                  </td>
+                  <td class="px-4 py-3 align-middle">
+                    <div class="d-flex align-items-center">
+                      <div
+                        class="avatar-circle me-2"
+                        style="
+                          width: 32px;
+                          height: 32px;
+                          background: #e2e8f0;
+                          border-radius: 50%;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          font-size: 0.8rem;
+                          color: #4a5568;
+                          font-weight: bold;
+                        "
+                      >
+                        {{ reserva.nombre|slice:":1"|upper }}
+                      </div>
+                      <div>
+                        <div class="fw-bold text-dark">
+                          {{ reserva.nombre }}
+                        </div>
+                        <div class="small text-muted">{{ reserva.puesto }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 align-middle text-muted">
+                    {{ reserva.departamento }}
+                  </td>
+                  <td class="px-4 py-3 align-middle">
+                    {% if not is_history or request.user.is_staff or request.user.is_superuser %}
+                        {% if reserva.usuario == request.user or request.user.is_staff or request.user.is_superuser %}
+                        <form
+                          action="{% url 'reserva_delete' reserva.pk %}"
+                          method="POST"
+                          onsubmit="
+                            return confirm(
+                              '¿Estás seguro de que deseas eliminar esta reservación?{% if is_history %} (Esta acción es irreversible y se encuentra en el historial){% endif %}',
+                            );
+                          "
+                        >
+                          {% csrf_token %}
+                          <button
+                            type="submit"
+                            class="btn btn-outline-danger btn-sm rounded-pill px-3"
+                          >
+                            <i class="bi bi-trash-fill me-1"></i> {% if is_history %}Eliminar{% else %}Cancelar{% endif %}
+                          </button>
+                        </form>
+                        {% endif %}
+                    {% else %}
+                        <span class="badge bg-secondary opacity-50">Finalizada</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="5" class="text-center py-5 text-muted">
+                    <i
+                      class="bi bi-calendar-x d-block mb-2"
+                      style="font-size: 3rem; opacity: 0.3"
+                    ></i>
+                    No hay reservaciones registradas.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Vista Móvil (Tarjetas) -->
+          <div class="d-md-none p-3 bg-light bg-opacity-50">
+            {% for reserva in reservas %}
+            <div class="card mb-3 border-0 shadow-sm" style="border-radius: 12px; background: #fff; border-left: 4px solid {% if reserva.sala == 'SALA_1' %}#2c5282{% else %}#0ea5e9{% endif %} !important;">
+              <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <span class="badge {% if reserva.sala == 'SALA_1' %}bg-primary{% else %}bg-info{% endif %} rounded-pill px-3">
+                    {{ reserva.get_sala_display }}
+                  </span>
+                  <div class="text-end">
+                    <span class="fw-bold text-dark d-block" style="font-size: 0.9rem;">
+                      <i class="bi bi-calendar3 me-1 text-primary"></i>{{ reserva.fecha|date:"d/m/Y" }}
+                    </span>
+                    <span class="small text-muted" style="font-size: 0.8rem;">
+                      <i class="bi bi-clock me-1"></i>{{ reserva.hora_inicio|time:"H:i" }} - {{ reserva.hora_fin|time:"H:i" }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="d-flex align-items-center my-3">
+                  <div class="avatar-circle me-3" style="width: 38px; height: 38px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: #4a5568; font-weight: bold;">
+                    {{ reserva.nombre|slice:":1"|upper }}
+                  </div>
+                  <div>
+                    <div class="fw-bold text-dark" style="font-size: 0.95rem;">{{ reserva.nombre }}</div>
+                    <div class="small text-muted" style="font-size: 0.8rem;">{{ reserva.puesto }}</div>
+                  </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                  <div>
+                    <span class="small text-muted d-block" style="font-size: 0.75rem;">Departamento</span>
+                    <span class="fw-semibold text-secondary" style="font-size: 0.85rem;">{{ reserva.departamento }}</span>
+                  </div>
+                  <div>
+                    {% if not is_history or request.user.is_staff or request.user.is_superuser %}
+                        {% if reserva.usuario == request.user or request.user.is_staff or request.user.is_superuser %}
+                        <form
+                          action="{% url 'reserva_delete' reserva.pk %}"
+                          method="POST"
+                          onsubmit="
+                            return confirm(
+                              '¿Estás seguro de que deseas eliminar esta reservación?{% if is_history %} (Esta acción es irreversible y se encuentra en el historial){% endif %}',
+                            );
+                          "
+                        >
+                          {% csrf_token %}
+                          <button
+                            type="submit"
+                            class="btn btn-outline-danger btn-sm rounded-pill px-3"
+                            style="font-size: 0.8rem;"
+                          >
+                            <i class="bi bi-trash-fill me-1"></i> {% if is_history %}Eliminar{% else %}Cancelar{% endif %}
+                          </button>
+                        </form>
+                        {% endif %}
+                    {% else %}
+                        <span class="badge bg-secondary opacity-50" style="font-size: 0.8rem;">Finalizada</span>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-5 text-muted">
+              <i class="bi bi-calendar-x d-block mb-2" style="font-size: 3rem; opacity: 0.3"></i>
+              No hay reservaciones registradas.
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% if is_history and reservas.has_other_pages %}
+        <div class="card-footer bg-white py-3 border-top d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-radius: 0 0 15px 15px;">
+            <span class="text-muted small">
+                Página {{ reservas.number }} de {{ reservas.paginator.num_pages }} (Total: {{ reservas.paginator.count }} reservación{{ reservas.paginator.count|pluralize:"es" }})
+            </span>
+            <nav aria-label="Navegación de páginas">
+                <ul class="pagination mb-0">
+                    {% if reservas.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link shadow-sm" href="?page=1" aria-label="Primero">
+                            <i class="bi bi-chevron-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link shadow-sm" href="?page={{ reservas.previous_page_number }}" aria-label="Anterior">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link text-muted"><i class="bi bi-chevron-double-left"></i></span>
+                    </li>
+                    <li class="page-item disabled">
+                        <span class="page-link text-muted"><i class="bi bi-chevron-left"></i></span>
+                    </li>
+                    {% endif %}
+
+                    {% for num in reservas.paginator.page_range %}
+                        {% if reservas.number == num %}
+                        <li class="page-item active"><span class="page-link" style="background-color: #2c5282; border-color: #2c5282; color: #fff;">{{ num }}</span></li>
+                        {% elif num > reservas.number|add:'-3' and num < reservas.number|add:'3' %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if reservas.has_next %}
+                    <li class="page-item">
+                        <a class="page-link shadow-sm" href="?page={{ reservas.next_page_number }}" aria-label="Siguiente">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link shadow-sm" href="?page={{ reservas.paginator.num_pages }}" aria-label="Último">
+                            <i class="bi bi-chevron-double-right"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link text-muted"><i class="bi bi-chevron-right"></i></span>
+                    </li>
+                    <li class="page-item disabled">
+                        <span class="page-link text-muted"><i class="bi bi-chevron-double-right"></i></span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% elif is_history %}
+        <div class="card-footer bg-white py-3 border-top" style="border-radius: 0 0 15px 15px;">
+            <span class="text-muted small">
+                Total: {{ reservas.paginator.count }} reservación{{ reservas.paginator.count|pluralize:"es" }}
+            </span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .table-hover tbody tr:hover {
+    background-color: rgba(44, 82, 130, 0.03);
+    transform: scale(1.002);
+  }
+  .badge {
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+</style>
+{% endblock %}

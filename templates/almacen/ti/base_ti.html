@@ -1,0 +1,369 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Panel TI — ASAP Vales{% endblock %}</title>
+  <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet" />
+  <link rel="stylesheet" href="{% static 'icons/bootstrap-icons.min.css' %}" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ti-bg:        #0d1117;
+      --ti-surface:   #161b22;
+      --ti-surface2:  #1c2333;
+      --ti-border:    #30363d;
+      --ti-text:      #e6edf3;
+      --ti-muted:     #8b949e;
+      --ti-accent:    #e8a020;
+      --ti-accent2:   #f5c842;
+      --ti-danger:    #da3633;
+      --ti-success:   #2ea043;
+      --ti-sidebar-w: 260px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--ti-bg);
+      color: var(--ti-text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Sidebar ── */
+    #ti-sidebar {
+      width: var(--ti-sidebar-w);
+      background: var(--ti-surface);
+      border-right: 1px solid var(--ti-border);
+      min-height: 100vh;
+      position: fixed;
+      top: 0; left: 0;
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      transition: transform .25s ease;
+    }
+    .sidebar-brand {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--ti-border);
+      background: linear-gradient(135deg, #1a2340, var(--ti-surface));
+    }
+    .sidebar-brand .badge-ti {
+      background: linear-gradient(135deg, var(--ti-accent), var(--ti-accent2));
+      color: #000;
+      font-size: .65rem;
+      font-weight: 700;
+      padding: .25em .5em;
+      border-radius: 6px;
+      letter-spacing: .05em;
+    }
+    .nav-section-title {
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--ti-muted);
+      padding: 1.2rem 1.5rem .4rem;
+    }
+    .ti-nav-link {
+      display: flex;
+      align-items: center;
+      gap: .65rem;
+      padding: .6rem 1.5rem;
+      color: var(--ti-muted);
+      text-decoration: none;
+      font-size: .9rem;
+      border-radius: 0;
+      transition: background .15s, color .15s;
+      border-left: 3px solid transparent;
+    }
+    .ti-nav-link:hover {
+      background: var(--ti-surface2);
+      color: var(--ti-text);
+      border-left-color: var(--ti-border);
+    }
+    .ti-nav-link.active {
+      background: rgba(232,160,32,.12);
+      color: var(--ti-accent);
+      border-left-color: var(--ti-accent);
+      font-weight: 600;
+    }
+    .ti-nav-link i { font-size: 1rem; width: 1.2rem; text-align: center; }
+
+    /* ── Main content ── */
+    #ti-main {
+      margin-left: var(--ti-sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    #ti-topbar {
+      background: var(--ti-surface);
+      border-bottom: 1px solid var(--ti-border);
+      padding: .75rem 1.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 90;
+    }
+    .ti-page-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--ti-text);
+    }
+    #ti-content {
+      padding: 1.75rem;
+      flex: 1;
+    }
+
+    /* ── Cards ── */
+    .ti-card {
+      background: var(--ti-surface);
+      border: 1px solid var(--ti-border);
+      border-radius: 12px;
+    }
+    .ti-card-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--ti-border);
+      font-weight: 600;
+      font-size: .95rem;
+    }
+
+    /* ── Tables ── */
+    .ti-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+    .ti-table th {
+      background: var(--ti-surface2);
+      color: var(--ti-muted);
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      padding: .75rem 1rem;
+      border-bottom: 1px solid var(--ti-border);
+    }
+    .ti-table td {
+      padding: .75rem 1rem;
+      border-bottom: 1px solid var(--ti-border);
+      vertical-align: middle;
+    }
+    .ti-table tr:last-child td { border-bottom: none; }
+    .ti-table tr:hover td { background: rgba(255,255,255,.025); }
+
+    /* Envoltura con scroll propio: evita que la tabla desborde la página en móvil */
+    .ti-tabla-scroll {
+      overflow-x: auto;
+      border-radius: 0 0 12px 12px;
+    }
+    .ti-tabla-scroll .ti-table { min-width: 560px; }
+
+    /* ── Buttons ── */
+    .btn-ti {
+      background: linear-gradient(135deg, var(--ti-accent), var(--ti-accent2));
+      color: #000; font-weight: 600; border: none;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .btn-ti:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(232,160,32,.4); color: #000; }
+    .btn-ti-outline {
+      border: 1px solid var(--ti-border);
+      color: var(--ti-muted);
+      background: transparent;
+      transition: background .15s, color .15s;
+    }
+    .btn-ti-outline:hover { background: var(--ti-surface2); color: var(--ti-text); }
+
+    /* ── Forms ── */
+    .form-control, .form-select {
+      background: var(--ti-bg) !important;
+      border: 1px solid var(--ti-border) !important;
+      color: var(--ti-text) !important;
+      border-radius: 8px;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: var(--ti-accent) !important;
+      box-shadow: 0 0 0 3px rgba(232,160,32,.2) !important;
+    }
+    .form-label { font-size: .85rem; color: var(--ti-muted); font-weight: 500; }
+
+    /* ── Badges ── */
+    .badge-nivel-1  { background:#1a3a5c; color:#7eb8f7; }
+    .badge-nivel-3  { background:#1a3a2c; color:#56d364; }
+    .badge-nivel-4  { background:#3a2a1a; color:#f0c070; }
+    .badge-nivel-6  { background:#3a1a2a; color:#f07895; }
+    .badge-activo   { background:#1a3a2c; color:#56d364; }
+    .badge-inactivo { background:#3a1a1a; color:#f07890; }
+
+    /* ── PIN modal overlay ── */
+    .pin-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.7);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999;
+    }
+    .pin-modal {
+      background: var(--ti-surface);
+      border: 1px solid var(--ti-border);
+      border-radius: 16px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 360px;
+      box-shadow: 0 16px 48px rgba(0,0,0,.6);
+    }
+
+    /* ── Alerts ── */
+    .alert-ti-success { background:#0f2419; border-color:#2ea043; color:#56d364; }
+    .alert-ti-danger  { background:#2d1b1b; border-color:#da3633; color:#ffa198; }
+    .alert-ti-warning { background:#2d2116; border-color:#e3b341; color:#f0c070; }
+    .alert-ti-info    { background:#1a2640; border-color:#3b7dd8; color:#7eb8f7; }
+
+    /* ── Responsive sidebar ── */
+    @media (max-width: 768px) {
+      #ti-sidebar { transform: translateX(-100%); }
+      #ti-sidebar.open { transform: translateX(0); }
+      #ti-main { margin-left: 0; }
+    }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<nav id="ti-sidebar">
+  <div class="sidebar-brand">
+    <div class="d-flex align-items-center gap-2 mb-1">
+      <i class="bi bi-shield-lock-fill" style="color:var(--ti-accent);font-size:1.4rem;"></i>
+      <span class="fw-bold" style="font-size:1.05rem;">ASAP Vales</span>
+    </div>
+    <span class="badge-ti">PANEL TI</span>
+  </div>
+
+  <div style="overflow-y:auto;flex:1;">
+    {% if user.is_superuser or user.is_staff %}
+    <div class="nav-section-title">General</div>
+    <a href="{% url 'cuentas:ti_dashboard' %}" class="ti-nav-link {% block nav_dashboard %}{% endblock %}">
+      <i class="bi bi-speedometer2"></i> Dashboard
+    </a>
+
+    <div class="nav-section-title">Usuarios</div>
+    <a href="{% url 'cuentas:ti_cuentas' %}" class="ti-nav-link {% block nav_cuentas %}{% endblock %}">
+      <i class="bi bi-person-lines-fill"></i> Cuentas y perfiles
+    </a>
+    {% endif %}
+
+    <div class="nav-section-title">Catálogos</div>
+    <a href="{% url 'catalogos:empresas' %}" class="ti-nav-link {% block nav_empresas %}{% endblock %}">
+      <i class="bi bi-building"></i> Empresas
+    </a>
+    <a href="{% url 'catalogos:areas' %}" class="ti-nav-link {% block nav_areas %}{% endblock %}">
+      <i class="bi bi-diagram-3"></i> Áreas
+    </a>
+    <a href="{% url 'catalogos:planos' %}" class="ti-nav-link {% block nav_planos %}{% endblock %}">
+      <i class="bi bi-map"></i> Planos / Proyectos
+    </a>
+    <a href="{% url 'catalogos:unidades' %}" class="ti-nav-link {% block nav_unidades %}{% endblock %}">
+      <i class="bi bi-rulers"></i> Unidades de medida
+    </a>
+    <a href="{% url 'catalogos:materiales' %}" class="ti-nav-link {% block nav_materiales %}{% endblock %}">
+      <i class="bi bi-box-seam"></i> Materiales
+    </a>
+
+    {% if user.is_superuser or user.is_staff %}
+    <div class="nav-section-title">Control</div>
+    <a href="{% url 'almacen:solicitudes_anulacion' %}" class="ti-nav-link {% block nav_solicitudes %}{% endblock %}">
+      <i class="bi bi-exclamation-triangle"></i> Solicitudes anulación
+      {% if pendientes_count %}<span class="badge rounded-pill ms-auto" style="background:var(--ti-danger);font-size:.7rem;">{{ pendientes_count }}</span>{% endif %}
+    </a>
+    <a href="{% url 'almacen:vales_eliminados' %}" class="ti-nav-link {% block nav_eliminados %}{% endblock %}">
+      <i class="bi bi-trash3"></i> Vales eliminados
+    </a>
+    <a href="{% url 'almacen:bitacora' %}" class="ti-nav-link {% block nav_bitacora %}{% endblock %}">
+      <i class="bi bi-journal-text"></i> Bitácora
+    </a>
+
+    <div class="nav-section-title">Configuración</div>
+    <a href="{% url 'catalogos:configuracion' %}" class="ti-nav-link {% block nav_config %}{% endblock %}">
+      <i class="bi bi-gear"></i> Configuración global
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- Perfil activo en sidebar -->
+  <div style="padding:1rem 1.5rem;border-top:1px solid var(--ti-border);">
+    <div class="d-flex align-items-center gap-2">
+      <i class="bi bi-person-circle" style="font-size:1.4rem;color:var(--ti-muted);"></i>
+      <div>
+        <div class="fw-semibold" style="font-size:.85rem;">{{ request.perfil_activo.nombre|default:request.user.username }}</div>
+        <div style="font-size:.75rem;color:var(--ti-muted);">
+          {% if user.is_superuser %}
+            Administrador TI (Nivel 6)
+          {% elif user.is_staff %}
+            Supervisor TI (Nivel 4)
+          {% else %}
+            Usuario (Nivel 1)
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% if not request.session.access_token and request.session.perfil_id %}
+    <a href="{% url 'cuentas:cambiar_perfil' %}" class="btn btn-sm btn-ti-outline w-100 mt-2">
+      <i class="bi bi-arrow-left-right"></i> Cambiar perfil
+    </a>
+    {% endif %}
+  </div>
+</nav>
+
+<!-- ═══ MAIN ═══ -->
+<div id="ti-main">
+
+  <!-- Topbar -->
+  <div id="ti-topbar">
+    <div class="d-flex align-items-center gap-3">
+      <button class="btn btn-sm btn-ti-outline d-md-none" id="sidebarToggle">
+        <i class="bi bi-list"></i>
+      </button>
+      <span class="ti-page-title">{% block page_title %}Panel TI{% endblock %}</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      {% if messages %}
+        {% for msg in messages %}
+          <div class="alert alert-ti-{{ msg.tags|default:'info' }} py-1 px-3 mb-0 small">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+      <a href="{% url 'cuentas:logout' %}" class="btn btn-sm btn-ti-outline">
+        <i class="bi bi-box-arrow-right"></i> Salir
+      </a>
+    </div>
+  </div>
+
+  <!-- Flash messages (para mensajes Django) -->
+  {% if messages %}
+  <div class="px-4 pt-3">
+    {% for msg in messages %}
+    <div class="alert alert-ti-{{ msg.tags|default:'info' }} alert-dismissible small py-2 px-3" role="alert">
+      {{ msg }}
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Content -->
+  <div id="ti-content">
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+<script>
+  // Sidebar toggle mobile
+  document.getElementById('sidebarToggle')?.addEventListener('click', () => {
+    document.getElementById('ti-sidebar').classList.toggle('open');
+  });
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

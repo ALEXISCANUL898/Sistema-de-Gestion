@@ -1,0 +1,43 @@
+{% extends "almacen/ti/base_ti.html" %}
+{% block title %}Asignar PIN — Panel TI{% endblock %}
+{% block page_title %}Asignar / Restablecer PIN{% endblock %}
+{% block nav_cuentas %}active{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-sm-8 col-md-5 col-lg-4">
+    <a href="{% url 'cuentas:ti_perfiles' perfil.usuario_id %}" class="btn btn-ti-outline btn-sm mb-3">
+      <i class="bi bi-arrow-left"></i> Volver
+    </a>
+    <div class="ti-card">
+      <div class="ti-card-header text-center">
+        <i class="bi bi-key-fill me-2" style="color:var(--ti-accent);font-size:1.3rem;"></i>
+        PIN de <strong>{{ perfil.nombre }}</strong>
+      </div>
+      <div class="p-4">
+        <p class="small text-center mb-4" style="color:var(--ti-muted);">
+          Ingresa un PIN de 4 dígitos. El perfil deberá usarlo para autenticarse.
+        </p>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label text-center w-100">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+              <div class="small mt-1 text-center" style="color:var(--ti-danger);">{{ field.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+          {% if form.non_field_errors %}
+          <div class="alert alert-ti-danger small text-center py-2">{{ form.non_field_errors|join:"<br>" }}</div>
+          {% endif %}
+          <button type="submit" class="btn btn-ti w-100 mt-2">
+            <i class="bi bi-shield-check me-1"></i>Establecer PIN
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

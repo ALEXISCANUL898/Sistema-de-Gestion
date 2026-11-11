@@ -1,0 +1,209 @@
+{% extends 'base.html' %} {% load static %} {% block title %}Enkontrol - Panel de
+Soporte{% endblock %} {% block content %}
+<div class="page-header">
+  <div class="page-header__texto">
+    <h1><i class="bi bi-headset"></i> Panel de Soporte Enkontrol</h1>
+    <p class="page-header__desc">Tickets activos de Enkontrol. Revisa y atiende los que requieren respuesta.</p>
+  </div>
+  <div class="page-header__acciones">
+    <a href="{% url 'econtrol_reportes' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-graph-up"></i> Ver reportes
+    </a>
+  </div>
+</div>
+
+<div class="row mb-4">
+  <div class="col-6 col-md-3">
+    <div class="kpi-card">
+      <span class="kpi-card__etiqueta">Total Activos</span>
+      <span class="kpi-card__valor kpi-card__valor--total" id="total-activos">{{ total_activos }}</span>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="kpi-card">
+      <span class="kpi-card__etiqueta">Abiertos</span>
+      <span class="kpi-card__valor kpi-card__valor--abierto" id="abiertos-count">{{ abiertos_count }}</span>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="kpi-card">
+      <span class="kpi-card__etiqueta">En Progreso</span>
+      <span class="kpi-card__valor kpi-card__valor--progreso" id="en-progreso-count">{{ en_progreso_count }}</span>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="kpi-card">
+      <span class="kpi-card__etiqueta">Críticos</span>
+      <span class="kpi-card__valor kpi-card__valor--critico" id="critica-count">{{ critica_count }}</span>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-3">
+  <div class="card-header bg-primary text-white py-3">
+    <h2 class="h5 mb-0">
+      <i class="bi bi-ticket-detailed me-2"></i>Todos los Tickets Activos
+    </h2>
+  </div>
+  <div class="card-body p-3" id="ticketsContainer">
+    {% for ticket in tickets %}
+    <div class="ticket-card {% if ticket.status == 'Abierto' %}border-abierto{% elif ticket.status == 'En Progreso' %}border-progreso{% endif %} {% if ticket.unread %}ticket-unread{% endif %}">
+      <div class="d-flex justify-content-between align-items-start">
+        <div class="ticket-id">ENKONTROL-{{ ticket.id }}</div>
+        <span class="badge-estado badge-estado--{% if ticket.status == 'Abierto' %}abierto{% elif ticket.status == 'En Progreso' %}progreso{% else %}cerrado{% endif %}">
+          {{ ticket.status }}
+        </span>
+      </div>
+      <div class="ticket-title d-flex align-items-center">
+        <a class="ticket-card__enlace" href="{% url 'econtrol_ver_ticket' ticket.id %}"><strong>{{ ticket.title }}</strong></a>
+        {% if ticket.unread %}
+        <span class="badge bg-danger ms-2"><i class="bi bi-bell-fill"></i></span>
+        {% endif %}
+      </div>
+      <div class="ticket-meta">
+        <span class="text-dark fw-semibold"><i class="bi bi-person-fill me-1"></i>{{ ticket.usuario }}</span>
+        <span class="text-muted">·</span>
+        <span class="text-muted">{{ ticket.category|default:"Sin categoría" }}</span>
+        <span class="text-muted">·</span>
+        <span class="badge bg-{% if ticket.nivel == 4 %}danger{% elif ticket.nivel == 3 %}warning{% elif ticket.nivel == 2 %}info{% else %}secondary{% endif %}">
+          Nivel {{ ticket.nivel }}
+        </span>
+        <span class="text-muted">·</span>
+        <span class="badge bg-{% if ticket.priority == 'Crítica' %}danger{% elif ticket.priority == 'Urgente' %}warning{% elif ticket.priority == 'Alta' %}info{% else %}secondary{% endif %}">
+          {{ ticket.priority }}
+        </span>
+      </div>
+      <div class="ticket-footer">
+        <small class="text-muted"><i class="bi bi-calendar-event me-1"></i>{{ ticket.created_at|date:"d/m/Y" }}</small>
+        <a href="{% url 'econtrol_ver_ticket' ticket.id %}" class="btn btn-sm btn-outline-primary">
+          Atender <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+    {% empty %}
+    <div class="estado-vacio">
+      <i class="bi bi-inbox estado-vacio__icono"></i>
+      <p class="estado-vacio__titulo">No hay tickets Enkontrol activos</p>
+      <p class="estado-vacio__texto">Cuando un usuario reporte un ticket aparecerá aquí.</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% if page_obj and page_obj.paginator.num_pages > 1 %}
+<nav class="mt-3">
+  <ul class="pagination justify-content-center">
+    {% if page_obj.has_previous %}
+    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a></li>
+    {% endif %}
+    <li class="page-item disabled"><span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span></li>
+    {% if page_obj.has_next %}
+    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+
+<script>
+  function getBadgeClass(value, type) {
+    if (type === "nivel") {
+      if (value == 4) return "danger";
+      if (value == 3) return "warning";
+      if (value == 2) return "info";
+      return "secondary";
+    }
+    if (type === "priority") {
+      if (value === "Crítica") return "danger";
+      if (value === "Urgente") return "warning";
+      if (value === "Alta") return "info";
+      return "secondary";
+    }
+    return "secondary";
+  }
+
+  function getStatusClass(value) {
+    if (value === "Abierto") return "abierto";
+    if (value === "En Progreso") return "progreso";
+    return "cerrado";
+  }
+
+  function renderTickets(tickets) {
+    const container = document.getElementById("ticketsContainer");
+    if (!container) return;
+
+    if (tickets.length === 0) {
+      container.innerHTML = `
+        <div class="estado-vacio">
+          <i class="bi bi-inbox estado-vacio__icono"></i>
+          <p class="estado-vacio__titulo">No hay tickets Enkontrol activos</p>
+          <p class="estado-vacio__texto">Cuando un usuario reporte un ticket aparecerá aquí.</p>
+        </div>
+      `;
+      return;
+    }
+
+    let html = "";
+    tickets.forEach((ticket) => {
+      const borderClass = ticket.status === "Abierto" ? "border-abierto" : (ticket.status === "En Progreso" ? "border-progreso" : "");
+      const unreadClass = ticket.unread ? "ticket-unread" : "";
+      
+      html += `
+        <div class="ticket-card ${borderClass} ${unreadClass}">
+          <div class="d-flex justify-content-between align-items-start">
+            <div class="ticket-id">ENKONTROL-${ticket.id}</div>
+            <span class="badge-estado badge-estado--${getStatusClass(ticket.status)}">${ticket.status}</span>
+          </div>
+          <div class="ticket-title d-flex align-items-center">
+            <a class="ticket-card__enlace" href="/econtrol/ticket/${ticket.id}/"><strong>${ticket.title}</strong></a>
+            ${ticket.unread ? '<span class="badge bg-danger ms-2"><i class="bi bi-bell-fill"></i></span>' : ""}
+          </div>
+          <div class="ticket-meta">
+            <span class="text-dark fw-semibold"><i class="bi bi-person-fill me-1"></i>${ticket.usuario}</span>
+            <span class="text-muted">·</span>
+            <span class="text-muted">${ticket.category || "Sin categoría"}</span>
+            <span class="text-muted">·</span>
+            <span class="badge bg-${getBadgeClass(ticket.nivel, "nivel")}">Nivel ${ticket.nivel}</span>
+            <span class="text-muted">·</span>
+            <span class="badge bg-${getBadgeClass(ticket.priority, "priority")}">${ticket.priority}</span>
+          </div>
+          <div class="ticket-footer">
+            <small class="text-muted"><i class="bi bi-calendar-event me-1"></i>${ticket.created_at}</small>
+            <a href="/econtrol/ticket/${ticket.id}/" class="btn btn-sm btn-outline-primary">
+              Atender <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  }
+
+  function fetchTickets() {
+    fetch('{% url "econtrol_api_list" %}')
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          renderTickets(data.tickets);
+
+          // Actualizar contadores
+          if (data.counts) {
+            const totalActivos = document.getElementById("total-activos");
+            const abiertos = document.getElementById("abiertos-count");
+            const enProgreso = document.getElementById("en-progreso-count");
+            const criticos = document.getElementById("critica-count");
+
+            if (totalActivos)
+              totalActivos.textContent = data.counts.total_activos;
+            if (abiertos) abiertos.textContent = data.counts.abiertos;
+            if (enProgreso) enProgreso.textContent = data.counts.en_progreso;
+            if (criticos) criticos.textContent = data.counts.criticos;
+          }
+        }
+      })
+      .catch((error) => console.error("Error:", error));
+  }
+
+  {% if page_obj.number == 1 %}
+  setInterval(() => { if (!document.hidden) fetchTickets(); }, 30000);
+  {% endif %}
+</script>
+{% endblock %}

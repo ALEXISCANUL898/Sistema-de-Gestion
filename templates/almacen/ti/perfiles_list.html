@@ -1,0 +1,93 @@
+{% extends "almacen/ti/base_ti.html" %}
+{% block title %}Perfiles de {{ cuenta.username }} — Panel TI{% endblock %}
+{% block page_title %}Perfiles — {{ cuenta.username }}{% endblock %}
+{% block nav_cuentas %}active{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <a href="{% url 'cuentas:ti_cuentas' %}" class="btn btn-ti-outline btn-sm"><i class="bi bi-arrow-left"></i> Volver a cuentas</a>
+  <a href="{% url 'cuentas:ti_perfil_crear' cuenta.pk %}" class="btn btn-ti btn-sm"><i class="bi bi-plus-lg me-1"></i>Nuevo perfil</a>
+</div>
+
+<div class="ti-card">
+  <div class="ti-card-header">
+    <i class="bi bi-people-fill me-2" style="color:var(--ti-accent);"></i>
+    Perfiles de <strong>{{ cuenta.username }}</strong>
+    {% with n=cuenta.extension.nivel %}
+    <span class="badge badge-nivel-{{ n }} rounded-pill ms-2">Nivel {{ n }}</span>
+    {% endwith %}
+  </div>
+  <table class="ti-table">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Puesto</th>
+        <th>Rol almacén</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in perfiles %}
+      <tr>
+        <td>
+          <div class="d-flex align-items-center gap-2">
+            {% if p.firma %}
+              <img src="{% url 'cuentas:serve_firma' p.firma.name %}" alt="firma" style="height:32px;width:32px;border-radius:6px;object-fit:cover;border:1px solid var(--ti-border);">
+            {% else %}
+              <div style="height:32px;width:32px;border-radius:6px;background:var(--ti-surface2);display:flex;align-items:center;justify-content:center;">
+                <i class="bi bi-person" style="color:var(--ti-muted);"></i>
+              </div>
+            {% endif %}
+            <span>{{ p.nombre }}</span>
+          </div>
+        </td>
+        <td style="color:var(--ti-muted);">{{ p.puesto }}</td>
+        <td>
+          {% if p.rol_almacen %}
+            {% if p.rol_almacen == "ENCARGADO" %}
+              <span class="badge" style="background:#1a3a2c;color:#56d364;">ENCARGADO</span>
+            {% else %}
+              <span class="badge" style="background:#1a2640;color:#7eb8f7;">DESPACHADOR</span>
+            {% endif %}
+          {% else %}
+            <span style="color:var(--ti-muted);font-size:.8rem;">—</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if p.activo %}
+            <span class="badge badge-activo rounded-pill">Activo</span>
+          {% else %}
+            <span class="badge badge-inactivo rounded-pill">Inactivo</span>
+          {% endif %}
+          {% if p.is_locked %}
+            <span class="badge rounded-pill ms-1" style="background:#3a1a1a;color:#f07890;">Bloqueado</span>
+          {% endif %}
+        </td>
+        <td>
+          <div class="d-flex gap-1 flex-wrap">
+            <a href="{% url 'cuentas:ti_perfil_editar' p.pk %}" class="btn btn-ti-outline btn-sm" title="Editar">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <a href="{% url 'cuentas:ti_perfil_pin' p.pk %}" class="btn btn-ti-outline btn-sm" title="Cambiar PIN">
+              <i class="bi bi-key"></i>
+            </a>
+            <a href="{% url 'cuentas:ti_perfil_toggle' p.pk %}" class="btn btn-sm {{ p.activo|yesno:'btn-ti-outline,btn-ti' }}" title="{{ p.activo|yesno:'Desactivar,Activar' }}">
+              <i class="bi {{ p.activo|yesno:'bi-toggle-on,bi-toggle-off' }}"></i>
+            </a>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5" class="text-center py-5" style="color:var(--ti-muted);">
+          <i class="bi bi-person-x" style="font-size:2rem;display:block;margin-bottom:.5rem;"></i>
+          Esta cuenta no tiene perfiles aún.
+          <br><a href="{% url 'cuentas:ti_perfil_crear' cuenta.pk %}" class="btn btn-ti btn-sm mt-2">Crear primer perfil</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Reservaciones - Yucasa{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{% static 'img/logo_yucasa.png' %}" />
+    <link rel="apple-touch-icon" href="{% static 'img/logo_yucasa.png' %}" />
+    <link rel="manifest" href="{% static 'manifest.json' %}" />
+    <link
+      href="{% static 'css/bootstrap.min.css' %}"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="{% static 'icons/bootstrap-icons.min.css' %}"
+    />
+    <link
+      rel="stylesheet"
+      href="{% static 'css/custom.css' %}"
+    />
+    <style>
+      body {
+        background-color: #f5f7fa;
+        font-family: "Inter", sans-serif;
+      }
+      .navbar-reservas {
+        background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+        border-bottom: 3px solid #c5a059;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-reservas shadow-sm">
+      <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="{% url 'reserva_list' %}">
+          <i class="bi bi-calendar-check-fill me-2"></i> Reservaciones de Salas
+        </a>
+        <button
+          class="navbar-toggler border-0"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarReservas"
+          aria-controls="navbarReservas"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarReservas">
+          <div class="navbar-nav me-auto">
+            <a class="nav-link" href="{% url 'reserva_list' %}">
+              <i class="bi bi-list-ul"></i> Todas las Reservas
+            </a>
+            <a class="nav-link" href="{% url 'reserva_create' %}">
+              <i class="bi bi-plus-circle"></i> Nueva Reserva
+            </a>
+            {% if request.user.is_staff or request.user.is_superuser %}
+            <a class="nav-link" href="{% url 'reserva_history' %}">
+              <i class="bi bi-clock-history"></i> Historial
+            </a>
+            {% endif %}
+          </div>
+          <div class="d-flex align-items-center mt-2 mt-lg-0">
+            <span class="text-light me-3 small">
+              <i class="bi bi-person-circle me-1"></i>{{ request.user.username }}
+            </span>
+            <a class="btn btn-outline-light btn-sm" href="{% url 'logout' %}">
+              <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container-fluid mt-4 px-2 px-md-4">
+      {% block content %}{% endblock %}
+    </div>
+
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+  </body>
+</html>

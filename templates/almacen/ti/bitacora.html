@@ -1,0 +1,64 @@
+{% extends "almacen/ti/base_ti.html" %}
+{% block title %}Bitácora — Panel TI{% endblock %}
+{% block page_title %}Bitácora de Auditoría{% endblock %}
+{% block nav_bitacora %}active{% endblock %}
+
+{% block content %}
+<!-- Filtros -->
+<div class="ti-card mb-3">
+  <div class="p-3">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label">Acción</label>
+        <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Ej. TI_CUENTA_CREADA">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Desde</label>
+        <input type="date" name="fecha_desde" value="{{ fecha_desde }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Hasta</label>
+        <input type="date" name="fecha_hasta" value="{{ fecha_hasta }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-ti btn-sm w-100">Filtrar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="ti-card">
+  <div class="ti-card-header">
+    <i class="bi bi-journal-text me-2" style="color:var(--ti-accent);"></i>
+    Eventos ({{ page_obj.paginator.count }})
+    <span class="small ms-2" style="color:var(--ti-muted);">Solo lectura — inmutable</span>
+  </div>
+  <table class="ti-table">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Perfil</th>
+        <th>Acción</th>
+        <th>Detalle</th>
+        <th>IP</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in page_obj %}
+      <tr>
+        <td style="color:var(--ti-muted);font-size:.78rem;white-space:nowrap;">{{ e.fecha|date:"d/m/Y H:i:s" }}</td>
+        <td style="white-space:nowrap;">{{ e.perfil.nombre|default:"Sistema" }}</td>
+        <td><code style="color:var(--ti-accent);font-size:.78rem;">{{ e.accion }}</code></td>
+        <td style="max-width:280px;font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ e.detalle }}">
+          {{ e.detalle|default:"—"|truncatechars:80 }}
+        </td>
+        <td style="color:var(--ti-muted);font-size:.78rem;">{{ e.ip|default:"—" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="text-center py-5" style="color:var(--ti-muted);">Sin eventos para los filtros seleccionados.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% include "almacen/ti/catalogos/_paginacion.html" %}
+</div>
+{% endblock %}

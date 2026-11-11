@@ -1,0 +1,222 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}IA Help{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{% static 'img/logo_yucasa.png' %}" />
+    <link rel="apple-touch-icon" href="{% static 'img/logo_yucasa.png' %}" />
+    <link rel="manifest" href="{% static 'manifest.json' %}" />
+    <link
+      href="{% static 'css/bootstrap.min.css' %}"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="{% static 'icons/bootstrap-icons.min.css' %}"
+    />
+    <link
+      rel="stylesheet"
+      href="{% static 'css/custom.css' %}"
+    />
+    <link rel="stylesheet" href="{% static 'css/tokens.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/componentes.css' %}" />
+    <style>
+      body {
+        background-color: #f5f7fa;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container-fluid">
+        <a
+          class="navbar-brand fw-bold"
+          href="{% if request.user.is_superuser or request.user.is_staff %}{% url 'support_dashboard' %}{% else %}{% url 'listikets' %}{% endif %}"
+        >
+          <i class="bi bi-headset"></i> IA Help
+        </a>
+        <!-- Botón hamburger para móvil -->
+        <button
+          class="navbar-toggler border-0"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarIAHelp"
+          aria-controls="navbarIAHelp"
+          aria-expanded="false"
+          aria-label="Abrir menú de navegación"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarIAHelp">
+          <div class="navbar-nav me-auto">
+            {% if request.user.is_superuser or request.user.is_staff %}
+            <a class="nav-link" href="{% url 'support_dashboard' %}"{% if request.resolver_match.url_name == 'support_dashboard' %} aria-current="page"{% endif %}>
+              <i class="bi bi-grid"></i> Panel Soporte
+            </a>
+            <a class="nav-link" href="{% url 'active_tickets' %}"{% if request.resolver_match.url_name == 'active_tickets' %} aria-current="page"{% endif %}>
+              <i class="bi bi-list-task"></i> Tickets Activos
+            </a>
+            <a class="nav-link" href="{% url 'cerrados_tickets' %}"{% if request.resolver_match.url_name == 'cerrados_tickets' %} aria-current="page"{% endif %}>
+              <i class="bi bi-check-circle"></i> Tickets Cerrados
+            </a>
+            <a class="nav-link" href="{% url 'reportes' %}"{% if request.resolver_match.url_name == 'reportes' %} aria-current="page"{% endif %}>
+              <i class="bi bi-graph-up"></i> Reportes
+            </a>
+            <a class="nav-link" href="{% url 'chat_ia' %}"{% if request.resolver_match.url_name == 'chat_ia' %} aria-current="page"{% endif %}>
+              <i class="bi bi-robot"></i> Chat IA
+            </a>
+            {% else %}
+            <a class="nav-link" href="{% url 'listikets' %}"{% if request.resolver_match.url_name == 'listikets' %} aria-current="page"{% endif %}>
+              <i class="bi bi-list-task"></i> Mis Tickets
+            </a>
+            <a class="nav-link" href="{% url 'iahelp' %}"{% if request.resolver_match.url_name == 'iahelp' %} aria-current="page"{% endif %}>
+              <i class="bi bi-plus-circle"></i> Nuevo Ticket
+            </a>
+            <a class="nav-link" href="{% url 'cerrados_tickets' %}"{% if request.resolver_match.url_name == 'cerrados_tickets' %} aria-current="page"{% endif %}>
+              <i class="bi bi-check-circle"></i> Tickets Cerrados
+            </a>
+            {% endif %}
+          </div>
+          <!-- Usuario y logout al final del menú colapsado -->
+          <div class="d-flex align-items-center mt-2 mt-lg-0">
+            <span class="text-light me-3 small">
+              <i class="bi bi-person-circle me-1"></i>{{ request.user.username }}
+            </span>
+            <a class="btn btn-outline-light btn-sm" href="{% url 'logout' %}">
+              <i class="bi bi-box-arrow-right"></i>
+              <span class="d-none d-sm-inline">Cerrar Sesión</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container-fluid mt-3">{% block content %}{% endblock %}</div>
+
+    <!-- Toast container para mensajes del sistema -->
+    <div
+      class="toast-container position-fixed top-0 end-0 p-3"
+      id="toastContainer"
+      style="z-index: 1090"
+    >
+      {% if messages %} {% for message in messages %}
+      <div
+        class="toast align-items-center border-0 text-bg-{% if message.tags == 'error' %}danger{% elif message.tags == 'success' %}success{% elif message.tags == 'warning' %}warning{% elif message.tags == 'info' %}info{% else %}primary{% endif %}"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+        data-bs-autohide="true"
+        data-bs-delay="4000"
+      >
+        <div class="d-flex">
+          <div class="toast-body d-flex align-items-center">
+            <i
+              class="bi {% if message.tags == 'error' %}bi-x-circle-fill{% elif message.tags == 'success' %}bi-check-circle-fill{% elif message.tags == 'warning' %}bi-exclamation-triangle-fill{% else %}bi-info-circle-fill{% endif %} me-2 fs-5"
+            ></i>
+            {{ message }}
+          </div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+            aria-label="Cerrar"
+          ></button>
+        </div>
+      </div>
+      {% endfor %} {% endif %}
+    </div>
+
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    <script>
+      // Mostrar todos los toasts automáticamente al cargar
+      document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll(".toast").forEach(function (toastEl) {
+          var toast = new bootstrap.Toast(toastEl);
+          toast.show();
+        });
+      });
+      const INACTIVITY_TIMEOUT = 5 * 60 * 1000;
+      let inactivityTimer;
+      let countdownTimer;
+
+      function showInactivityWarning() {
+        if (document.getElementById("inactivityModal")) return;
+
+        const modalHtml = `
+                <div class="modal fade" id="inactivityModal" data-bs-backdrop="static" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title"><i class="bi bi-clock-history"></i> Sesión por expirar</h5>
+                            </div>
+                            <div class="modal-body text-center">
+                                <p>Tu sesión cerrará en <strong id="countdown">60</strong> segundos por inactividad.</p>
+                                <p class="text-muted">¿Deseas continuar?</p>
+                            </div>
+                            <div class="modal-footer justify-content-center">
+                                <button type="button" class="btn btn-secondary" onclick="extendSession()">Continuar</button>
+                                <a href="{% url 'logout' %}" class="btn btn-primary">Cerrar Sesión</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        document.body.insertAdjacentHTML("beforeend", modalHtml);
+
+        let secondsLeft = 60;
+        const countdownEl = document.getElementById("countdown");
+        countdownTimer = setInterval(() => {
+          secondsLeft--;
+          countdownEl.textContent = secondsLeft;
+          if (secondsLeft <= 0) {
+            clearInterval(countdownTimer);
+            window.location.href = "{% url 'logout' %}";
+          }
+        }, 1000);
+
+        const modal = new bootstrap.Modal(
+          document.getElementById("inactivityModal"),
+        );
+        modal.show();
+
+        document
+          .getElementById("inactivityModal")
+          .addEventListener("hidden.bs.modal", function () {
+            document.getElementById("inactivityModal").remove();
+          });
+      }
+
+      function extendSession() {
+        clearInterval(countdownTimer);
+        const modal = bootstrap.Modal.getInstance(
+          document.getElementById("inactivityModal"),
+        );
+        if (modal) modal.hide();
+        resetInactivityTimer();
+      }
+
+      function resetInactivityTimer() {
+        clearTimeout(inactivityTimer);
+        inactivityTimer = setTimeout(showInactivityWarning, INACTIVITY_TIMEOUT);
+      }
+
+      const events = [
+        "mousedown",
+        "mousemove",
+        "keypress",
+        "scroll",
+        "touchstart",
+        "click",
+      ];
+      events.forEach((event) => {
+        document.addEventListener(event, resetInactivityTimer, {
+          passive: true,
+        });
+      });
+
+      resetInactivityTimer();
+    </script>
+  </body>
+</html>

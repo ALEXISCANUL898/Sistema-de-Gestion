@@ -1,0 +1,184 @@
+{% extends 'intranet/base.html' %} {% block title %}Crear Publicación - Intranet
+Yucasa{% endblock %} {% block content %}
+<div
+  class="max-w-[500px] mx-auto bg-white rounded-xl shadow-sm border border-gray-200/80 overflow-hidden"
+>
+  <!-- Modal Header -->
+  <div
+    class="flex items-center justify-between px-5 py-4 border-b border-gray-150"
+  >
+    <div class="w-8"></div>
+    <!-- Spacer to center title -->
+    <h2 class="text-lg font-bold text-gray-900 text-center">
+      Crear publicación
+    </h2>
+    <a
+      href="{% url 'intranet_mural' %}"
+      class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-colors"
+      title="Cancelar"
+    >
+      <i class="bi bi-x-lg text-sm"></i>
+    </a>
+  </div>
+
+  <!-- Composer Body -->
+  <form class="p-4 space-y-4" method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <!-- User Info Header -->
+    <div class="flex items-center gap-3">
+      <div
+        class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm select-none"
+      >
+        {{ user.username|slice:":1"|upper }}
+      </div>
+      <div>
+        <h4 class="font-bold text-gray-900 text-sm leading-tight">
+          {{ user.username }}
+        </h4>
+        <div
+          class="inline-flex items-center gap-1 bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md text-[10px] font-bold mt-1 select-none border border-gray-200/50"
+        >
+          <i class="bi bi-globe-americas"></i>
+          <span>Público</span>
+          <i class="bi bi-caret-down-fill text-[8px] ml-0.5"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Inputs -->
+    <div class="space-y-2 pt-2">
+      <!-- Title field -->
+      <div class="relative">
+        {{ form.title }} {% if form.title.errors %}
+        <p class="text-xs text-red-600 mt-1">
+          <i class="bi bi-exclamation-circle-fill"></i> {{ form.title.errors.0
+          }}
+        </p>
+        {% endif %}
+      </div>
+
+      <!-- Description field -->
+      <div class="relative pt-1">
+        {{ form.description }} {% if form.description.errors %}
+        <p class="text-xs text-red-600 mt-1">
+          <i class="bi bi-exclamation-circle-fill"></i> {{
+          form.description.errors.0 }}
+        </p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div
+      class="border border-gray-200 hover:bg-gray-50/50 rounded-lg p-4 transition-colors cursor-pointer relative"
+      onclick="triggerFileInput()"
+    >
+      <div
+        class="flex flex-col items-center justify-center text-center space-y-2 py-2"
+      >
+        <div
+          class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500"
+        >
+          <i class="bi bi-image text-xl"></i>
+        </div>
+        <div class="text-xs">
+          <span class="font-bold text-gray-700 text-sm block"
+            >Agregar fotos</span
+          >
+          <span class="text-gray-400 mt-0.5 block">o arrastra y suelta</span>
+        </div>
+      </div>
+
+      <div class="hidden">{{ form.image }}</div>
+    </div>
+
+    <div
+      id="file-selected-indicator"
+      class="hidden items-center gap-2 bg-blue-50 text-blue-800 text-xs px-3 py-2 rounded-lg border border-blue-100"
+    >
+      <i class="bi bi-file-earmark-image-fill text-sm text-blue-600"></i>
+      <span id="selected-file-name" class="font-semibold truncate flex-grow"
+        >archivo.jpg</span
+      >
+      <button
+        type="button"
+        onclick="clearSelectedFile(event)"
+        class="text-gray-400 hover:text-gray-600"
+      >
+        <i class="bi bi-x-circle-fill text-sm"></i>
+      </button>
+    </div>
+
+    {% if form.image.errors %}
+    <p class="text-xs text-red-600 mt-1">
+      <i class="bi bi-exclamation-circle-fill"></i> {{ form.image.errors.0 }}
+    </p>
+    {% endif %}
+
+    <div class="pt-3 border-t border-gray-100 flex gap-3">
+      <button
+        type="submit"
+        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+      >
+        Publicar
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const titleInput = document.getElementById("{{ form.title.id_for_label }}");
+    if (titleInput) {
+      titleInput.className =
+        "w-full border-b border-gray-150 py-2 text-base font-bold text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors";
+      titleInput.placeholder = "Título de la publicación...";
+    }
+
+    const descTextarea = document.getElementById(
+      "{{ form.description.id_for_label }}",
+    );
+    if (descTextarea) {
+      descTextarea.className =
+        "w-full border-none py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none resize-none min-h-[120px]";
+      descTextarea.placeholder =
+        "¿De qué quieres hablar hoy, {{ user.username }}?";
+    }
+
+    // Escuchar cambios en el input de archivo real
+    const fileInput = document.querySelector('input[type="file"]');
+    if (fileInput) {
+      fileInput.addEventListener("change", function () {
+        const indicator = document.getElementById("file-selected-indicator");
+        const nameLabel = document.getElementById("selected-file-name");
+        if (fileInput.files.length > 0) {
+          nameLabel.textContent = fileInput.files[0].name;
+          indicator.classList.remove("hidden");
+          indicator.classList.add("flex");
+        } else {
+          indicator.classList.remove("flex");
+          indicator.classList.add("hidden");
+        }
+      });
+    }
+  });
+
+  function triggerFileInput() {
+    const fileInput = document.querySelector('input[type="file"]');
+    if (fileInput) {
+      fileInput.click();
+    }
+  }
+
+  function clearSelectedFile(event) {
+    event.stopPropagation(); // Evitar que abra el selector de nuevo
+    const fileInput = document.querySelector('input[type="file"]');
+    const indicator = document.getElementById("file-selected-indicator");
+    if (fileInput) {
+      fileInput.value = ""; // Limpiar el input
+      indicator.classList.remove("flex");
+      indicator.classList.add("hidden");
+    }
+  }
+</script>
+{% endblock %}

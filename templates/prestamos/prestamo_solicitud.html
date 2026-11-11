@@ -1,0 +1,324 @@
+{% extends "prestamos/base_prestamos.html" %}
+{% block title %}Solicitud de Préstamo de Equipo{% endblock %}
+{% block nav_solicitud %}active{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-xl-10">
+
+    <!-- Header -->
+    <div class="mb-4 animate-in">
+      <h1 class="fw-bold text-primary mb-1" style="font-size:1.75rem;">
+        <i class="bi bi-laptop me-2"></i>Solicitud de Préstamo de Equipo
+      </h1>
+      <p class="text-muted mb-0">Complete todos los campos requeridos para registrar su solicitud.</p>
+    </div>
+
+    <form method="post" id="formPrestamo" novalidate>
+      {% csrf_token %}
+
+      <!-- ── 1. Datos del Solicitante ── -->
+      <div class="card card-premium mb-4 animate-in" style="animation-delay:0.05s;">
+        <div class="card-header-premium">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-person-badge fs-4"></i>
+            <div>
+              <h5 class="mb-0">Datos del Solicitante</h5>
+              <small class="text-muted">Información personal del responsable de la solicitud</small>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <label for="{{ form.nombre_completo.id_for_label }}" class="form-label">
+                <i class="bi bi-person me-1 text-primary"></i>Nombre Completo <span class="text-danger">*</span>
+              </label>
+              {{ form.nombre_completo }}
+              {% if form.nombre_completo.errors %}
+                <div class="invalid-feedback d-block">{{ form.nombre_completo.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="col-12 col-md-6">
+              <label for="{{ form.area_departamento.id_for_label }}" class="form-label">
+                <i class="bi bi-building me-1 text-primary"></i>Área / Departamento <span class="text-danger">*</span>
+              </label>
+              {{ form.area_departamento }}
+              {% if form.area_departamento.errors %}
+                <div class="invalid-feedback d-block">{{ form.area_departamento.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="col-12 col-md-4">
+              <label for="{{ form.puesto.id_for_label }}" class="form-label">
+                <i class="bi bi-briefcase me-1 text-primary"></i>Puesto <span class="text-danger">*</span>
+              </label>
+              {{ form.puesto }}
+              {% if form.puesto.errors %}
+                <div class="invalid-feedback d-block">{{ form.puesto.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="col-12 col-md-4">
+              <label for="{{ form.correo.id_for_label }}" class="form-label">
+                <i class="bi bi-envelope me-1 text-primary"></i>Correo Electrónico <span class="text-danger">*</span>
+              </label>
+              {{ form.correo }}
+              {% if form.correo.errors %}
+                <div class="invalid-feedback d-block">{{ form.correo.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="col-12 col-md-4">
+              <label for="{{ form.telefono.id_for_label }}" class="form-label">
+                <i class="bi bi-telephone me-1 text-primary"></i>Teléfono <span class="text-danger">*</span>
+              </label>
+              {{ form.telefono }}
+              {% if form.telefono.errors %}
+                <div class="invalid-feedback d-block">{{ form.telefono.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 2. Datos de la Solicitud ── -->
+      <div class="card card-premium mb-4 animate-in" style="animation-delay:0.10s;">
+        <div class="card-header-premium">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-calendar3 fs-4"></i>
+            <div>
+              <h5 class="mb-0">Datos de la Solicitud</h5>
+              <small class="text-muted">Período y condiciones de uso del equipo</small>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-3">
+            <div class="col-12 col-md-4">
+              <label for="{{ form.fecha_inicio_uso.id_for_label }}" class="form-label">
+                <i class="bi bi-calendar-event me-1 text-primary"></i>Fecha de Inicio de Uso <span class="text-danger">*</span>
+              </label>
+              {{ form.fecha_inicio_uso }}
+              {% if form.fecha_inicio_uso.errors %}
+                <div class="invalid-feedback d-block">{{ form.fecha_inicio_uso.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="col-12 col-md-4">
+              <label for="{{ form.fecha_devolucion.id_for_label }}" class="form-label">
+                <i class="bi bi-calendar-check me-1 text-primary"></i>Fecha de Devolución <span class="text-danger">*</span>
+              </label>
+              {{ form.fecha_devolucion }}
+              {% if form.fecha_devolucion.errors %}
+                <div class="invalid-feedback d-block">{{ form.fecha_devolucion.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="col-12 col-md-4">
+              <label for="{{ form.hora_devolucion.id_for_label }}" class="form-label">
+                <i class="bi bi-clock me-1 text-primary"></i>Hora Estimada de Devolución <span class="text-danger">*</span>
+              </label>
+              {{ form.hora_devolucion }}
+              {% if form.hora_devolucion.errors %}
+                <div class="invalid-feedback d-block">{{ form.hora_devolucion.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="col-12">
+              <label for="{{ form.contratista.id_for_label }}" class="form-label">
+                <i class="bi bi-briefcase me-1 text-primary"></i>Contratista <span class="text-danger">*</span>
+              </label>
+              {{ form.contratista }}
+              {% if form.contratista.errors %}
+                <div class="invalid-feedback d-block">{{ form.contratista.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="col-12">
+              <label for="{{ form.motivo_uso.id_for_label }}" class="form-label">
+                <i class="bi bi-chat-square-text me-1 text-primary"></i>Motivo de Uso <span class="text-danger">*</span>
+              </label>
+              {{ form.motivo_uso }}
+              {% if form.motivo_uso.errors %}
+                <div class="invalid-feedback d-block">{{ form.motivo_uso.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 2.1 Datos del Equipo Solicitado (Solo Lectura) ── -->
+      <div class="card card-premium mb-4 animate-in" style="animation-delay:0.12s;">
+        <div class="card-header-premium">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-info-circle fs-4"></i>
+            <div>
+              <h5 class="mb-0">Datos del Equipo</h5>
+              <small class="text-muted">Especificaciones del equipo que está solicitando en este momento</small>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <label class="form-label">
+                <i class="bi bi-cpu me-1 text-primary"></i>Equipo
+              </label>
+              {{ form.equipo }}
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">
+                <i class="bi bi-tag me-1 text-primary"></i>Marca
+              </label>
+              {{ form.marca }}
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">
+                <i class="bi bi-hash me-1 text-primary"></i>Modelo
+              </label>
+              {{ form.modelo_equipo }}
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">
+                <i class="bi bi-lightning-charge me-1 text-primary"></i>Potencia Nominal
+              </label>
+              {{ form.potencia_nominal }}
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">
+                <i class="bi bi-battery-charging me-1 text-primary"></i>Tipo de Batería
+              </label>
+              {{ form.tipo_bateria }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 3 & 4. Cláusula de Responsabilidad + Firma ── -->
+      <div class="card card-premium mb-4 animate-in" style="animation-delay:0.15s;">
+        <div class="card-header-premium">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-shield-check fs-4"></i>
+            <div>
+              <h5 class="mb-0">Cláusula de Responsabilidad</h5>
+              <small class="text-muted">Lea con atención y acepte los términos antes de enviar</small>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-4">
+          <!-- Texto legal -->
+          <div class="responsibility-box mb-4">
+            <h6 class="fw-bold text-warning mb-3" style="color:#92400e !important;">
+              <i class="bi bi-exclamation-triangle-fill me-1"></i> Términos de Responsabilidad
+            </h6>
+            <p class="responsibility-text mb-0">
+              Yo, el solicitante identificado en este formulario, declaro bajo protesta de decir verdad que:
+              <br><br>
+              <strong>1.</strong> Me hago responsable del <strong>cuidado, uso adecuado y conservación</strong> del equipo
+              tecnológico que me sea asignado durante el período comprendido entre la fecha de inicio y la fecha de
+              devolución señaladas en esta solicitud.
+              <br><br>
+              <strong>2.</strong> Me comprometo a devolver el equipo en las mismas condiciones físicas y de funcionamiento
+              en que fue entregado, en la fecha y hora acordadas.
+              <br><br>
+              <strong>3.</strong> En caso de <strong>daño, pérdida, robo o mal uso</strong> del equipo — sea por negligencia,
+              descuido o cualquier acto imputable a mi persona — acepto cubrir el costo total de reparación o reposición
+              del bien, conforme al avalúo que determine el área de Tecnologías de Información.
+              <br><br>
+              <strong>4.</strong> El equipo deberá ser utilizado exclusivamente para los fines institucionales descritos
+              en esta solicitud y no podrá ser cedido, prestado o utilizado por terceras personas sin autorización expresa.
+              <br><br>
+              <strong>5.</strong> Entiendo que el incumplimiento de cualquiera de las presentes condiciones puede derivar
+              en responsabilidades administrativas y/o disciplinarias de acuerdo con las políticas internas de la organización.
+            </p>
+          </div>
+
+          <!-- Checkbox de aceptación -->
+          <div class="accept-block {% if form.acepto_terminos.errors %}border-danger{% endif %}" id="acceptBlock">
+            {{ form.acepto_terminos }}
+            <div>
+              <label for="{{ form.acepto_terminos.id_for_label }}" class="form-label mb-0">
+                <i class="bi bi-pen me-1"></i>Acepto los términos de responsabilidad descritos anteriormente
+              </label>
+              <div class="accept-meta" id="acceptDateTime">
+                Fecha y hora de aceptación: <strong id="currentDateTime">—</strong>
+              </div>
+            </div>
+          </div>
+          {% if form.acepto_terminos.errors %}
+            <div class="invalid-feedback d-block mt-2">
+              <i class="bi bi-exclamation-circle me-1"></i>{{ form.acepto_terminos.errors.0 }}
+            </div>
+          {% endif %}
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger mt-3 border-0 rounded-3">
+              {% for error in form.non_field_errors %}
+                <div><i class="bi bi-exclamation-circle me-1"></i>{{ error }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- ── 5. Botón Enviar ── -->
+      <div class="d-flex justify-content-end gap-3 animate-in" style="animation-delay:0.2s;">
+        <a href="{% url 'prestamo_solicitud' %}" class="btn btn-outline-secondary px-4 rounded-3">
+          <i class="bi bi-arrow-counterclockwise me-1"></i>Limpiar
+        </a>
+        <button type="submit" class="btn-submit-primary" id="btnEnviar">
+          <i class="bi bi-send-check me-2"></i>Enviar Solicitud
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Mostrar fecha y hora actual en tiempo real
+  function updateDateTime() {
+    const now = new Date();
+    const opts = {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+    };
+    document.getElementById('currentDateTime').textContent = now.toLocaleDateString('es-MX', opts);
+  }
+  updateDateTime();
+  setInterval(updateDateTime, 1000);
+
+  // Resaltar bloque al marcar checkbox
+  const checkbox = document.getElementById('{{ form.acepto_terminos.id_for_label }}');
+  const acceptBlock = document.getElementById('acceptBlock');
+  if (checkbox) {
+    checkbox.addEventListener('change', function() {
+      if (this.checked) {
+        acceptBlock.style.background = '#d1fae5';
+        acceptBlock.style.borderColor = '#10b981';
+      } else {
+        acceptBlock.style.background = '';
+        acceptBlock.style.borderColor = '';
+      }
+    });
+  }
+
+  // Validar que fecha_inicio >= hoy en el cliente
+  const hoy = new Date().toISOString().split('T')[0];
+  const fInicio = document.getElementById('{{ form.fecha_inicio_uso.id_for_label }}');
+  const fDevol  = document.getElementById('{{ form.fecha_devolucion.id_for_label }}');
+  if (fInicio) fInicio.setAttribute('min', hoy);
+  if (fDevol)  fDevol.setAttribute('min', hoy);
+
+  if (fInicio && fDevol) {
+    fInicio.addEventListener('change', function() {
+      if (this.value) fDevol.setAttribute('min', this.value);
+    });
+  }
+
+  // Feedback visual al enviar
+  const form = document.getElementById('formPrestamo');
+  const btn  = document.getElementById('btnEnviar');
+  if (form && btn) {
+    form.addEventListener('submit', function() {
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Enviando...';
+      btn.disabled = true;
+    });
+  }
+</script>
+{% endblock %}

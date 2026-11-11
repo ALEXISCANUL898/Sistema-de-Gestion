@@ -1,0 +1,42 @@
+{% extends "almacen/ti/base_ti.html" %}
+{% block title %}{{ titulo }} — Panel TI{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+{% block nav_cuentas %}active{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <a href="{% url 'cuentas:ti_perfiles' cuenta.pk %}" class="btn btn-ti-outline btn-sm mb-3">
+      <i class="bi bi-arrow-left"></i> Volver a perfiles de {{ cuenta.username }}
+    </a>
+    <div class="ti-card">
+      <div class="ti-card-header">
+        <i class="bi bi-person-vcard me-2" style="color:var(--ti-accent);"></i>{{ titulo }}
+      </div>
+      <div class="p-4">
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+          {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}
+              <div class="small mt-1" style="color:var(--ti-muted);">{{ field.help_text }}</div>
+            {% endif %}
+            {% if field.errors %}
+              <div class="small mt-1" style="color:var(--ti-danger);">{{ field.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+          {% if form.non_field_errors %}
+          <div class="alert alert-ti-danger small py-2">{{ form.non_field_errors|join:"<br>" }}</div>
+          {% endif %}
+          <button type="submit" class="btn btn-ti w-100 mt-2">
+            <i class="bi bi-save me-1"></i>Guardar perfil
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

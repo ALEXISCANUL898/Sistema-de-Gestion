@@ -1,0 +1,58 @@
+{% extends "almacen/ti/base_ti.html" %}
+{% block title %}Vales Eliminados — Panel TI{% endblock %}
+{% block page_title %}Vales Eliminados{% endblock %}
+{% block nav_eliminados %}active{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <form method="get" class="d-flex gap-2">
+    <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="N° de vale…" style="width:160px;">
+    <button class="btn btn-ti btn-sm">Buscar</button>
+  </form>
+</div>
+
+<div class="ti-card">
+  <div class="ti-card-header">
+    <i class="bi bi-trash3 me-2" style="color:var(--ti-danger);"></i>
+    Vales eliminados lógicamente ({{ page_obj.paginator.count }})
+  </div>
+  <table class="ti-table">
+    <thead>
+      <tr>
+        <th>Consecutivo</th>
+        <th>Fecha emisión</th>
+        <th>Creado por</th>
+        <th>Empresa</th>
+        <th>Eliminado por</th>
+        <th>Motivo</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in page_obj %}
+      <tr>
+        <td><code style="color:var(--ti-danger);">{{ v.consecutivo }}</code></td>
+        <td style="color:var(--ti-muted);font-size:.8rem;">{{ v.fecha|date:"d/m/Y" }}</td>
+        <td>{{ v.creado_por.nombre }}</td>
+        <td>{{ v.empresa|default:"—" }}</td>
+        <td style="color:var(--ti-muted);">{{ v.eliminado_por.nombre|default:"—" }}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.8rem;" title="{{ v.motivo_eliminacion }}">
+          {{ v.motivo_eliminacion|truncatechars:60 }}
+        </td>
+        <td>
+          <a href="{% url 'almacen:vale_restaurar' v.pk %}" class="btn btn-ti btn-sm">
+            <i class="bi bi-arrow-counterclockwise"></i> Restaurar
+          </a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="text-center py-5" style="color:var(--ti-muted);">
+        <i class="bi bi-check-circle" style="font-size:2rem;display:block;margin-bottom:.5rem;color:var(--ti-success);"></i>
+        No hay vales eliminados.
+      </td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% include "almacen/ti/catalogos/_paginacion.html" %}
+</div>
+{% endblock %}

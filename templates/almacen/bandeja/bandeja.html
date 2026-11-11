@@ -1,0 +1,161 @@
+{% extends "almacen/base_almacen.html" %}
+{% block title %}Bandeja — ASAP Vales{% endblock %}
+{% block page_title %}Bandeja de almacén{% endblock %}
+{% block nav_bandeja %}active{% endblock %}
+
+{% block extra_head %}
+<style>
+  .sem { display:inline-block; width:12px; height:12px; border-radius:50%; }
+  .sem-verde { background:#2ea043; } .sem-amarillo { background:#e3b341; } .sem-rojo { background:#da3633; }
+  .stat { text-align:center; padding:.6rem; }
+  .stat .n { font-size:1.3rem; font-weight:700; }
+  .stat .l { font-size:.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card-al p-2 mb-3">
+  <div class="row g-0">
+    <div class="col stat"><div class="n">{{ contadores.por_asignar }}</div><div class="l">Por asignar</div></div>
+    <div class="col stat"><div class="n">{{ contadores.asignados }}</div><div class="l">Asignados</div></div>
+    <div class="col stat"><div class="n">{{ contadores.parciales }}</div><div class="l">Parciales</div></div>
+    <div class="col stat"><div class="n">{{ contadores.por_cerrar }}</div><div class="l">Por cerrar</div></div>
+    <div class="col stat"><div class="n">{{ contadores.cerrados_hoy }}</div><div class="l">Cerrados hoy</div></div>
+  </div>
+</div>
+
+{% if not encargado %}
+<ul class="nav nav-pills mb-3 gap-2">
+  <li class="nav-item">
+    <a class="nav-link nav-link-al {% if tab != 'todos' %}active{% endif %}" href="?{{ qs_base }}{% if qs_base %}&{% endif %}tab=mis&tab_estado={{ tab_estado }}">Mis asignados</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link nav-link-al {% if tab == 'todos' %}active{% endif %}" href="?{{ qs_base }}{% if qs_base %}&{% endif %}tab=todos&tab_estado={{ tab_estado }}">Todos (lectura)</a>
+  </li>
+</ul>
+{% endif %}
+
+<ul class="nav nav-pills mb-3 gap-2 flex-wrap">
+  {% for key, label, num in tabs_estado %}
+  <li class="nav-item">
+    <a class="nav-link nav-link-al {% if tab_estado == key %}active{% endif %}"
+       href="?{{ qs_base }}{% if qs_base %}&{% endif %}{% if tab %}tab={{ tab }}&{% endif %}tab_estado={{ key }}">{{ label }} <span class="badge bg-secondary">{{ num }}</span></a>
+  </li>
+  {% endfor %}
+</ul>
+
+<div class="card-al p-3 mb-3">
+  <form method="get" class="row g-2">
+    {% if tab %}<input type="hidden" name="tab" value="{{ tab }}" />{% endif %}
+    <input type="hidden" name="tab_estado" value="{{ tab_estado }}" />
+    <div class="col-6 col-md-2"><input type="text" name="q" value="{{ f.q }}" class="form-control form-control-sm" placeholder="N°" /></div>
+    <div class="col-6 col-md-2">
+      <select name="empresa" class="form-select form-select-sm">
+        <option value="">Empresa…</option>
+        {% for e in empresas %}<option value="{{ e.pk }}" {% if f.empresa == e.pk|stringformat:"s" %}selected{% endif %}>{{ e.nombre }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-md-2"><input type="text" name="solicitante" value="{{ f.solicitante }}" class="form-control form-control-sm" placeholder="Solicitante…" /></div>
+    <div class="col-6 col-md-2">
+      <select name="tipo" class="form-select form-select-sm">
+        <option value="">Movimiento…</option>
+        {% for v, l in tipos %}<option value="{{ v }}" {% if f.tipo == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-md-2 d-flex gap-1">
+      <button type="submit" class="btn btn-sm btn-accent flex-grow-1"><i class="bi bi-funnel"></i></button>
+      <a href="{% url 'almacen:bandeja' %}{% if tab %}?tab={{ tab }}{% endif %}" class="btn btn-sm btn-ghost"><i class="bi bi-x-lg"></i></a>
+    </div>
+  </form>
+</div>
+
+{% if encargado %}
+<form method="post" id="bulk-form">
+{% csrf_token %}
+<div class="card-al p-2 mb-3 d-flex flex-wrap gap-2 align-items-center">
+  <span class="small" style="color:var(--muted);">Asignar seleccionados a:</span>
+  <select name="despachador_id" class="form-select form-select-sm" style="max-width:260px;" required>
+    <option value="">— Despachador —</option>
+    {% for d in despachadores %}<option value="{{ d.pk }}">{{ d.nombre }} ({{ d.puesto }})</option>{% endfor %}
+  </select>
+  <button type="submit" class="btn btn-sm btn-accent"><i class="bi bi-send me-1"></i>Asignar</button>
+</div>
+{% endif %}
+
+<div class="card-al p-0 overflow-hidden">
+  <div class="table-responsive">
+    <table class="table-al mb-0">
+      <thead>
+        <tr>
+          {% if encargado %}<th style="width:36px;"><input type="checkbox" id="chk-all" /></th>{% endif %}
+          <th></th><th>N°</th><th>Fecha</th><th>Solicitante</th><th>Estado</th><th>Asignado a</th><th>Antigüedad</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in page_obj %}
+        <tr>
+          {% if encargado %}
+          <td>{% if v.pk in operables and v.estado == "EMITIDO" %}<input type="checkbox" name="vale_ids" value="{{ v.pk }}" class="chk-vale" />{% endif %}</td>
+          {% endif %}
+          <td><span class="sem sem-{{ v.color_semaforo }}" title="{{ v.antiguedad_h }} h"></span></td>
+          <td class="fw-semibold text-nowrap">{{ v.consecutivo }}</td>
+          <td class="text-nowrap small">{{ v.fecha|date:"d/m/Y H:i" }}</td>
+          <td class="small">{{ v.creado_por.nombre }}</td>
+          <td><span class="badge badge-est-{{ v.estado }}">{{ v.get_estado_display }}</span></td>
+          <td class="small">{{ v.vigente.asignado_a.nombre|default:"<span style='color:var(--muted);'>— por asignar —</span>" }}</td>
+          <td class="small text-nowrap">{{ v.antiguedad_h }} h</td>
+          <td class="text-end"><a href="{% url 'almacen:panel_detalle' v.pk %}" class="btn btn-sm btn-ghost">Atender</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9" class="text-center py-4" style="color:var(--muted);">Sin vales con esos filtros.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% if encargado %}</form>{% endif %}
+
+{% if page_obj.has_other_pages %}
+<nav class="mt-3">
+  <ul class="pagination pagination-sm justify-content-center">
+    {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?{{ qs_page }}&page={{ page_obj.previous_page_number }}">‹</a></li>{% endif %}
+    <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+    {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?{{ qs_page }}&page={{ page_obj.next_page_number }}">›</a></li>{% endif %}
+  </ul>
+</nav>
+{% endif %}
+
+<div class="card-al p-3 mt-3">
+  <form method="get" action="{% url 'almacen:exportar_entregas' %}" class="row g-2 align-items-end">
+    <div class="col-12 fw-semibold"><i class="bi bi-file-earmark-excel me-1"></i>Excel de materiales entregados</div>
+    <div class="col-6 col-md-3">
+      <label class="form-label">Desde</label>
+      <input type="date" name="desde" value="{{ hoy }}" class="form-control form-control-sm" required />
+    </div>
+    <div class="col-6 col-md-3">
+      <label class="form-label">Hasta</label>
+      <input type="date" name="hasta" value="{{ hoy }}" class="form-control form-control-sm" required />
+    </div>
+    {% if encargado %}
+    <div class="col-12 col-md-4">
+      <label class="form-label">Despachador (opcional)</label>
+      <select name="despachador" class="form-select form-select-sm">
+        <option value="">Todos</option>
+        {% for d in despachadores %}<option value="{{ d.pk }}">{{ d.nombre }}</option>{% endfor %}
+      </select>
+    </div>
+    {% endif %}
+    <div class="col-12 col-md-2">
+      <button type="submit" class="btn btn-sm btn-accent w-100"><i class="bi bi-download me-1"></i>Descargar</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.getElementById('chk-all')?.addEventListener('change', e => {
+    document.querySelectorAll('.chk-vale').forEach(c => { c.checked = e.target.checked; });
+  });
+</script>
+{% endblock %}

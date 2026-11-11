@@ -1,0 +1,83 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Sistema de Vales — ASAP{% endblock %}</title>
+  <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet" />
+  <link rel="stylesheet" href="{% static 'icons/bootstrap-icons.min.css' %}" />
+  <style>
+    :root {
+      --asap-dark: #0d1117;
+      --asap-card: #161b22;
+      --asap-border: #30363d;
+      --asap-accent: #e8a020;
+      --asap-accent-hover: #f0b840;
+    }
+    body {
+      background: linear-gradient(135deg, #0d1117 0%, #1c2333 100%);
+      min-height: 100vh;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: #e6edf3;
+    }
+    .auth-card {
+      background: var(--asap-card);
+      border: 1px solid var(--asap-border);
+      border-radius: 16px;
+      box-shadow: 0 8px 48px rgba(0,0,0,.6);
+    }
+    .brand-icon {
+      width: 64px; height: 64px;
+      background: linear-gradient(135deg, var(--asap-accent), #f5c842);
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; color: #000; margin: 0 auto;
+      box-shadow: 0 4px 16px rgba(232,160,32,.4);
+    }
+    .form-control, .form-select {
+      background: #0d1117;
+      border: 1px solid var(--asap-border);
+      color: #e6edf3;
+    }
+    .form-control:focus, .form-select:focus {
+      background: #0d1117;
+      border-color: var(--asap-accent);
+      color: #e6edf3;
+      box-shadow: 0 0 0 3px rgba(232,160,32,.25);
+    }
+    .btn-asap {
+      background: linear-gradient(135deg, var(--asap-accent), #f5c842);
+      color: #000;
+      font-weight: 700;
+      border: none;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .btn-asap:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(232,160,32,.4);
+      color: #000;
+    }
+    .text-muted { color: #8b949e !important; }
+    .alert-danger { background: #2d1b1b; border-color: #da3633; color: #ffa198; }
+    .alert-warning { background: #2d2116; border-color: #e3b341; color: #f0c070; }
+    /* Foco visible para teclado */
+    a:focus-visible,
+    button:focus-visible,
+    .form-check-input:focus-visible,
+    .form-control:focus-visible,
+    .form-select:focus-visible {
+      outline: 2px solid var(--asap-accent) !important;
+      outline-offset: 3px !important;
+    }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="d-flex align-items-center justify-content-center p-3">
+  <div class="w-100" style="max-width: 420px;">
+    {% block content %}{% endblock %}
+  </div>
+  <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

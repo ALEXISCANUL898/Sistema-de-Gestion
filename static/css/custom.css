@@ -1,0 +1,260 @@
+/* Custom CSS for Professional Corporate Theme */
+
+/* Override Bootstrap color variables for a professional look */
+:root {
+  --bs-primary-rgb: 33, 37, 41; /* Dark gray for primary */
+  --bs-secondary-rgb: 108, 117, 125; /* Medium gray */
+  --bs-success-rgb: 25, 135, 84; /* Keep success green but toned */
+  --bs-info-rgb: 13, 110, 253; /* Keep info blue */
+  --bs-warning-rgb: 255, 193, 7; /* Keep warning yellow */
+  --bs-danger-rgb: 220, 53, 69; /* Keep danger red */
+  --bs-light-rgb: 248, 249, 250; /* Light gray */
+  --bs-dark-rgb: 33, 37, 41; /* Dark gray */
+  --bs-body-bg: #ffffff; /* White background */
+  --bs-body-color: #212529; /* Dark text */
+  --bs-border-color: #dee2e6; /* Light border */
+}
+
+/* Professional navbar styling */
+.navbar {
+  background-color: var(--color-marca) !important; /* Dark navbar */
+  border-bottom: 1px solid var(--borde-fuerte);
+}
+
+.navbar-brand {
+  font-weight: 600;
+  color: var(--texto-inverso) !important;
+}
+
+/* Remove shadows from cards for a cleaner look */
+.card {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+  border: 1px solid var(--borde) !important;
+}
+
+/* Button styling - more subdued */
+.btn {
+  border-radius: 0.25rem;
+  font-weight: 500;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out,
+    transform 0.15s ease-in-out;
+}
+
+.btn-primary {
+  background-color: var(--color-marca);
+  border-color: var(--color-marca);
+}
+
+.btn-primary:hover {
+  background-color: var(--borde-fuerte);
+  border-color: var(--borde-fuerte);
+}
+
+.btn-outline-primary {
+  color: var(--color-marca);
+  border-color: var(--color-marca);
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--color-marca);
+  border-color: var(--color-marca);
+}
+
+/* Professional body styling */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+}
+
+/* Hero section adjustments */
+.display-4 {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: var(--texto) !important;
+}
+
+.lead {
+  font-size: 1.125rem;
+  color: var(--texto-suave) !important;
+}
+
+/* Remove emoji spans and adjust spacing - only for nav links */
+.nav-link span {
+  display: none;
+}
+
+.nav-link {
+  padding-left: 0.5rem;
+}
+
+.btn {
+  padding: 0.375rem 0.75rem;
+}
+
+/* Stats section styling */
+.card h3 {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.card p {
+  font-size: 0.875rem;
+  color: var(--texto-suave);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .display-4 {
+    font-size: 2rem;
+  }
+
+  .btn-lg {
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+  }
+}
+
+/* ============================================================
+   NOTIFICATIONS & UNREAD MESSAGES STYLES
+   ============================================================ */
+
+/* Pulse animation for notification badges */
+@keyframes pulse-animation {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+  }
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+  }
+}
+
+.pulse-animation {
+  animation: pulse-animation 2s infinite;
+}
+
+/* Border pulse animation */
+@keyframes pulse-border {
+  0% {
+    border-color: rgba(220, 53, 69, 1);
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4);
+  }
+  50% {
+    border-color: rgba(220, 53, 69, 0.6);
+    box-shadow: 0 0 0 5px rgba(220, 53, 69, 0);
+  }
+  100% {
+    border-color: rgba(220, 53, 69, 1);
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+  }
+}
+
+.pulse-border {
+  animation: pulse-border 2s infinite;
+}
+
+/* Row highlighting for unread messages */
+.unread-row {
+  background-color: rgba(220, 53, 69, 0.1) !important;
+  border-left: 4px solid var(--estado-critico) !important;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.unread-row:hover {
+  background-color: rgba(220, 53, 69, 0.2) !important;
+  transform: translateX(5px);
+}
+
+/* Notification badge styles */
+.notification-badge {
+  position: relative;
+  display: inline-block;
+}
+
+.notification-badge .badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 0.7rem;
+  min-width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* New message indicator */
+.new-message-indicator {
+  display: inline-flex;
+  align-items: center;
+  background-color: #dc3545;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: bold;
+  margin-left: 0.5rem;
+  animation: pulse-animation 1.5s infinite;
+}
+
+/* Browser notification permission button */
+.notification-permission-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.notification-permission-btn:hover {
+  background-color: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+/* Página actual en la navegación */
+.navbar .nav-link[aria-current="page"] {
+  color: var(--texto-inverso) !important;
+  box-shadow: inset 0 -2px 0 var(--color-acento);
+}
+
+/* Foco visible solo para teclado: nunca dejar el foco sin indicador */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--foco, #0d6efd) !important;
+  outline-offset: 2px !important;
+}
+
+/* Sobre navbar oscura el azul no contrasta: usar ámbar */
+.navbar-dark .nav-link:focus-visible,
+.navbar-dark .navbar-brand:focus-visible,
+.navbar-dark a:focus-visible,
+.navbar-dark button:focus-visible {
+  outline-color: var(--foco-oscuro, #ffd54f) !important;
+}
+
+/* Respetar la preferencia de menos movimiento */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

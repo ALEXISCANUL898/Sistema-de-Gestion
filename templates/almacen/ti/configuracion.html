@@ -1,0 +1,41 @@
+{% extends "almacen/ti/base_ti.html" %}
+{% block title %}Configuración Global — Panel TI{% endblock %}
+{% block page_title %}Configuración Global{% endblock %}
+{% block nav_config %}active{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="ti-card">
+      <div class="ti-card-header">
+        <i class="bi bi-gear-wide-connected me-2" style="color:var(--ti-accent);"></i>Configuración del Sistema de Vales
+      </div>
+      <div class="p-4">
+        {% if cfg.logo %}
+        <div class="mb-4 text-center">
+          <p class="form-label">Logo actual</p>
+          <img src="{% url 'cuentas:serve_firma' cfg.logo.name %}" alt="Logo" style="max-height:80px;border-radius:8px;border:1px solid var(--ti-border);padding:8px;background:var(--ti-bg);">
+        </div>
+        {% endif %}
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+          {% for field in form %}
+          <div class="mb-4">
+            <label class="form-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<div class="small mt-1" style="color:var(--ti-muted);">{{ field.help_text }}</div>{% endif %}
+            {% if field.errors %}<div class="small mt-1" style="color:var(--ti-danger);">{{ field.errors|join:", " }}</div>{% endif %}
+          </div>
+          {% endfor %}
+          {% if form.non_field_errors %}
+          <div class="alert alert-ti-danger small py-2">{{ form.non_field_errors|join:"<br>" }}</div>
+          {% endif %}
+          <button type="submit" class="btn btn-ti w-100">
+            <i class="bi bi-save me-1"></i>Guardar configuración
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

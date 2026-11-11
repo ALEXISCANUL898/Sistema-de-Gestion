@@ -1,0 +1,243 @@
+{% extends "prestamos/base_prestamos.html" %}
+{% block title %}Panel Administrador — Préstamo de Equipos{% endblock %}
+{% block nav_admin %}active{% endblock %}
+
+{% block content %}
+<div class="animate-in">
+
+  <!-- Header -->
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+      <h1 class="fw-bold text-primary mb-1" style="font-size:1.6rem;">
+        <i class="bi bi-grid-3x3-gap me-2"></i>Panel de Administrador
+      </h1>
+      <p class="text-muted mb-0">Gestión de solicitudes de préstamo de equipos</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <span class="badge rounded-pill text-bg-primary fs-6 px-3 py-2">
+        {{ total }} Solicitud{{ total|pluralize:"es" }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="card card-premium mb-4">
+    <div class="card-body p-3">
+      <form method="get" class="row g-2 align-items-end">
+        <div class="col-12 col-md-5">
+          <label class="form-label mb-1 small fw-semibold">Buscar por nombre o folio</label>
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0">
+              <i class="bi bi-search text-muted"></i>
+            </span>
+            <input type="text" name="q" value="{{ busqueda }}" class="form-control border-start-0"
+                   placeholder="Juan Pérez o PREST-XXXX..." style="border-radius:0 10px 10px 0;">
+          </div>
+        </div>
+        <div class="col-12 col-md-3">
+          <label class="form-label mb-1 small fw-semibold">Filtrar por estado</label>
+          <select name="estado" class="form-select">
+            <option value="">Todos los estados</option>
+            {% for val, label in estados %}
+              <option value="{{ val }}" {% if estado_filtro == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-auto">
+          <button type="submit" class="btn btn-primary rounded-3 px-4">
+            <i class="bi bi-funnel me-1"></i>Filtrar
+          </button>
+          <a href="{% url 'prestamo_admin_panel' %}" class="btn btn-outline-secondary rounded-3 ms-1">
+            <i class="bi bi-x-lg"></i>
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tabla de solicitudes -->
+  <div class="card card-premium">
+    <div class="card-header-premium">
+      <h5 class="mb-0"><i class="bi bi-table me-2"></i>Solicitudes de Préstamo</h5>
+    </div>
+    <div class="card-body p-0">
+      {% if solicitudes %}
+      <div class="table-responsive">
+        <table class="table table-prestamos table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Folio</th>
+              <th>Solicitante</th>
+              <th>Departamento</th>
+              <th>Inicio Uso</th>
+              <th>Devolución</th>
+              <th>Estado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in solicitudes %}
+            <tr>
+              <td>
+                <a href="{% url 'prestamo_comprobante' s.folio %}"
+                   class="fw-bold text-decoration-none text-primary">
+                  {{ s.folio }}
+                </a>
+              </td>
+              <td>
+                <div class="fw-semibold">{{ s.nombre_completo }}</div>
+                <div class="text-muted small">{{ s.correo }}</div>
+              </td>
+              <td>
+                <div>{{ s.area_departamento }}</div>
+                <div class="text-muted small">{{ s.puesto }}</div>
+              </td>
+              <td>{{ s.fecha_inicio_uso|date:"d/m/Y" }}</td>
+              <td>
+                <div>{{ s.fecha_devolucion|date:"d/m/Y" }}</div>
+                <div class="text-muted small">{{ s.hora_devolucion|time:"H:i" }} hrs</div>
+              </td>
+              <td>
+                <span class="status-badge badge-{{ s.estado }}">
+                  <i class="bi bi-circle-fill" style="font-size:0.45rem;"></i>
+                  {{ s.get_estado_display }}
+                </span>
+              </td>
+              <td class="text-center">
+                <div class="d-flex gap-1 justify-content-center flex-wrap">
+                  <!-- Cambiar estado -->
+                  <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary rounded-3 dropdown-toggle"
+                            type="button" data-bs-toggle="dropdown" title="Cambiar estado">
+                      <i class="bi bi-arrow-repeat"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                      {% for val, label in estados %}
+                        {% if val != s.estado %}
+                        <li>
+                          <form method="post" action="{% url 'prestamo_cambiar_estado' s.folio %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="estado" value="{{ val }}">
+                            <button type="submit" class="dropdown-item">
+                              <span class="status-badge badge-{{ val }} me-2">{{ label }}</span>
+                            </button>
+                          </form>
+                        </li>
+                        {% endif %}
+                      {% endfor %}
+                    </ul>
+                  </div>
+                  <!-- Imprimir / PDF -->
+                  <a href="{% url 'prestamo_imprimir' s.folio %}" target="_blank"
+                     class="btn btn-sm btn-outline-primary rounded-3" title="Imprimir / PDF">
+                    <i class="bi bi-printer"></i>
+                  </a>
+                  <!-- Ver comprobante -->
+                  <a href="{% url 'prestamo_comprobante' s.folio %}"
+                     class="btn btn-sm btn-outline-info rounded-3" title="Ver comprobante">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5">
+        <i class="bi bi-inbox text-muted" style="font-size:3rem;"></i>
+        <p class="text-muted mt-2">No se encontraron solicitudes
+          {% if estado_filtro or busqueda %}que coincidan con los filtros aplicados{% endif %}.
+        </p>
+        {% if estado_filtro or busqueda %}
+          <a href="{% url 'prestamo_admin_panel' %}" class="btn btn-outline-secondary rounded-3">
+            <i class="bi bi-x me-1"></i>Limpiar filtros
+          </a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+    {% if solicitudes %}
+    <div class="card-footer bg-transparent border-top px-4 py-3">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <span class="text-muted small">
+          Página <strong>{{ solicitudes.number }}</strong> de <strong>{{ solicitudes.paginator.num_pages }}</strong> (Total: <strong>{{ total }}</strong>)
+        </span>
+        
+        {% if solicitudes.has_other_pages %}
+        <nav aria-label="Navegación de páginas">
+          <ul class="pagination mb-0">
+            {% if solicitudes.has_previous %}
+            <li class="page-item">
+              <a class="page-link shadow-sm" href="?page=1{% if busqueda %}&q={{ busqueda }}{% endif %}{% if estado_filtro %}&estado={{ estado_filtro }}{% endif %}" aria-label="Primero">
+                <i class="bi bi-chevron-double-left"></i>
+              </a>
+            </li>
+            <li class="page-item">
+              <a class="page-link shadow-sm" href="?page={{ solicitudes.previous_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if estado_filtro %}&estado={{ estado_filtro }}{% endif %}" aria-label="Anterior">
+                <i class="bi bi-chevron-left"></i>
+              </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+              <span class="page-link text-muted"><i class="bi bi-chevron-double-left"></i></span>
+            </li>
+            <li class="page-item disabled">
+              <span class="page-link text-muted"><i class="bi bi-chevron-left"></i></span>
+            </li>
+            {% endif %}
+
+            {% for num in solicitudes.paginator.page_range %}
+              {% if solicitudes.number == num %}
+              <li class="page-item active"><span class="page-link" style="background-color: #2c5282; border-color: #2c5282; color: #fff;">{{ num }}</span></li>
+              {% elif num > solicitudes.number|add:'-3' and num < solicitudes.number|add:'3' %}
+              <li class="page-item">
+                <a class="page-link shadow-sm" href="?page={{ num }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if estado_filtro %}&estado={{ estado_filtro }}{% endif %}">{{ num }}</a>
+              </li>
+              {% endif %}
+            {% endfor %}
+
+            {% if solicitudes.has_next %}
+            <li class="page-item">
+              <a class="page-link shadow-sm" href="?page={{ solicitudes.next_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if estado_filtro %}&estado={{ estado_filtro }}{% endif %}" aria-label="Siguiente">
+                <i class="bi bi-chevron-right"></i>
+              </a>
+            </li>
+            <li class="page-item">
+              <a class="page-link shadow-sm" href="?page={{ solicitudes.paginator.num_pages }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if estado_filtro %}&estado={{ estado_filtro }}{% endif %}" aria-label="Último">
+                <i class="bi bi-chevron-double-right"></i>
+              </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+              <span class="page-link text-muted"><i class="bi bi-chevron-right"></i></span>
+            </li>
+            <li class="page-item disabled">
+              <span class="page-link text-muted"><i class="bi bi-chevron-double-right"></i></span>
+            </li>
+            {% endif %}
+          </ul>
+        </nav>
+        {% endif %}
+
+        <!-- Botón imprimir listado -->
+        <button onclick="window.print()" class="btn btn-sm btn-outline-secondary rounded-3">
+          <i class="bi bi-printer me-1"></i>Imprimir listado
+        </button>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Leyenda de estados -->
+  <div class="d-flex flex-wrap gap-2 mt-3">
+    <small class="text-muted me-1">Estados:</small>
+    <span class="status-badge badge-pendiente"><i class="bi bi-circle-fill" style="font-size:0.45rem;"></i> Pendiente</span>
+    <span class="status-badge badge-aprobada"><i class="bi bi-circle-fill" style="font-size:0.45rem;"></i> Aprobada</span>
+    <span class="status-badge badge-devuelto"><i class="bi bi-circle-fill" style="font-size:0.45rem;"></i> Devuelto</span>
+    <span class="status-badge badge-rechazada"><i class="bi bi-circle-fill" style="font-size:0.45rem;"></i> Rechazada</span>
+  </div>
+
+</div>
+{% endblock %}

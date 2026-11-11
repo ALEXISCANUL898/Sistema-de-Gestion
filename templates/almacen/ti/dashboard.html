@@ -1,0 +1,85 @@
+{% extends "almacen/ti/base_ti.html" %}
+{% block title %}Dashboard TI — ASAP Vales{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-4">
+
+  <!-- Stat cards -->
+  <div class="col-6 col-md-3">
+    <div class="ti-card p-3 text-center">
+      <div style="font-size:2rem;font-weight:700;color:var(--ti-accent);">{{ total_cuentas }}</div>
+      <div class="small" style="color:var(--ti-muted);">Cuentas registradas</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="ti-card p-3 text-center">
+      <div style="font-size:2rem;font-weight:700;color:#56d364;">{{ total_perfiles }}</div>
+      <div class="small" style="color:var(--ti-muted);">Perfiles activos</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="ti-card p-3 text-center">
+      <div style="font-size:2rem;font-weight:700;color:#f07890;">{{ vales_eliminados }}</div>
+      <div class="small" style="color:var(--ti-muted);">Vales eliminados</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="ti-card p-3 text-center">
+      <div style="font-size:2rem;font-weight:700;color:#f0c070;">{{ solicitudes_pendientes }}</div>
+      <div class="small" style="color:var(--ti-muted);">Solicitudes pendientes</div>
+    </div>
+  </div>
+</div>
+
+<!-- Accesos rápidos -->
+<div class="row g-3 mb-4">
+  <div class="col-12">
+    <div class="ti-card">
+      <div class="ti-card-header"><i class="bi bi-lightning-charge-fill me-2" style="color:var(--ti-accent);"></i>Accesos rápidos</div>
+      <div class="p-3 d-flex flex-wrap gap-2">
+        <a href="{% url 'cuentas:ti_cuentas' %}" class="btn btn-ti btn-sm"><i class="bi bi-person-plus me-1"></i>Nueva cuenta</a>
+        <a href="{% url 'catalogos:materiales' %}" class="btn btn-ti btn-sm"><i class="bi bi-box-seam me-1"></i>Materiales</a>
+        <a href="{% url 'catalogos:configuracion' %}" class="btn btn-ti btn-sm"><i class="bi bi-gear me-1"></i>Configuración</a>
+        <a href="{% url 'almacen:solicitudes_anulacion' %}" class="btn btn-sm" style="background:#3a2a10;color:#f0c070;border:1px solid #e3b341;">
+          <i class="bi bi-exclamation-triangle me-1"></i>Solicitudes ({{ solicitudes_pendientes }})
+        </a>
+        <a href="{% url 'almacen:bitacora' %}" class="btn btn-ti-outline btn-sm"><i class="bi bi-journal-text me-1"></i>Bitácora</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Últimos eventos de bitácora -->
+<div class="ti-card">
+  <div class="ti-card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-clock-history me-2" style="color:var(--ti-accent);"></i>Últimos eventos</span>
+    <a href="{% url 'almacen:bitacora' %}" class="btn btn-ti-outline btn-sm">Ver todos</a>
+  </div>
+  <div class="ti-tabla-scroll">
+    <table class="ti-table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Perfil</th>
+          <th>Acción</th>
+          <th>IP</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in ultimos_eventos %}
+        <tr>
+          <td style="color:var(--ti-muted);font-size:.8rem;">{{ e.fecha|date:"d/m/Y H:i" }}</td>
+          <td>{{ e.perfil.nombre|default:"—" }}</td>
+          <td><code style="color:var(--ti-accent);font-size:.8rem;">{{ e.accion }}</code></td>
+          <td style="color:var(--ti-muted);font-size:.8rem;">{{ e.ip|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="text-center py-4" style="color:var(--ti-muted);">Sin eventos registrados.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

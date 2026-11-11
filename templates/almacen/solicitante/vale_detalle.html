@@ -1,0 +1,198 @@
+{% extends "almacen/base_almacen.html" %}
+
+{% block title %}Vale {{ vale.consecutivo|default:"(borrador)" }} — ASAP Vales{% endblock %}
+{% block page_title %}
+<a href="{% url 'almacen:mis_vales' %}" class="btn btn-sm btn-ghost me-2">
+  <i class="bi bi-arrow-left"></i>
+</a>
+Vale N° {{ vale.consecutivo|default:"(borrador)" }}
+<span class="badge badge-est-{{ vale.estado }} ms-2">{{ vale.get_estado_display }}</span>
+{% endblock %}
+{% block nav_misvales %}active{% endblock %}
+
+{% block content %}
+{% if solicitud_pendiente %}
+<div class="alert alert-warning small py-2">
+  <i class="bi bi-exclamation-triangle me-1"></i>
+  Solicitud de anulación pendiente desde el {{ solicitud_pendiente.fecha|date:"d/m/Y H:i" }}. La resuelve TI.
+</div>
+{% endif %}
+
+<div class="card-al p-3 mb-3">
+  <div class="row g-2 small">
+    <div class="col-6 col-md-3"><strong>Fecha:</strong><br />{{ vale.fecha|date:"d/m/Y H:i" }}</div>
+    <div class="col-6 col-md-3"><strong>Movimiento:</strong><br />{{ vale.tipo_movimiento }}{% if vale.tipo_detalle %} ({{ vale.tipo_detalle }}){% endif %}</div>
+    <div class="col-6 col-md-3"><strong>Empresa:</strong><br />{{ vale.empresa|default:"—" }}</div>
+    <div class="col-6 col-md-3"><strong>Área:</strong><br />{{ vale.area|default:"—" }}</div>
+    <div class="col-6 col-md-3"><strong>Plano:</strong><br />{{ vale.plano|default:"—" }}</div>
+    <div class="col-6 col-md-3"><strong>Otro:</strong><br />{{ vale.dato_otro|default:"—" }}</div>
+    <div class="col-6 col-md-3"><strong>Solicitado por:</strong><br />{{ vale.creado_por.nombre }} <span style="color:var(--muted);">({{ vale.creado_por.puesto }})</span></div>
+  </div>
+  {% if vale.notas %}
+  <div class="mt-2 small"><strong>Nota:</strong><br />{{ vale.notas|linebreaksbr }}</div>
+  {% endif %}
+
+  {% if puede_operar and vale.estado == "BORRADOR" %}
+  <div class="d-flex flex-wrap gap-2 mt-3">
+    <a href="{% url 'almacen:vale_editar' vale.pk %}" class="btn btn-sm btn-ghost">
+      <i class="bi bi-pencil"></i> Editar
+    </a>
+    <button type="button" class="btn btn-sm btn-accent" data-bs-toggle="modal" data-bs-target="#modalFirmar">
+      <i class="bi bi-pen-fill"></i> Firmar y emitir
+    </button>
+    <form method="post" action="{% url 'almacen:vale_descartar' vale.pk %}" class="d-inline"
+          onsubmit="return confirm('¿Descartar este borrador?');">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm btn-ghost"><i class="bi bi-trash"></i> Descartar</button>
+    </form>
+  </div>
+  {% elif puede_operar and vale.estado != "BORRADOR" and not solicitud_pendiente %}
+  <div class="mt-3 d-flex flex-wrap gap-2">
+    <button type="button" class="btn btn-sm btn-ghost" data-bs-toggle="modal" data-bs-target="#modalAnular">
+      <i class="bi bi-exclamation-circle"></i> Solicitar anulación
+    </button>
+    {% if vale.estado == "CERRADO" or vale.estado == "CERRADO_CON_FALTANTE" %}
+    <a href="{% url 'almacen:vale_imprimir' vale.pk %}" target="_blank" class="btn btn-sm btn-ghost">
+      <i class="bi bi-printer"></i> Imprimir
+    </a>
+    {% endif %}
+  </div>
+  {% elif vale.estado == "CERRADO" or vale.estado == "CERRADO_CON_FALTANTE" %}
+  <div class="mt-3">
+    <a href="{% url 'almacen:vale_imprimir' vale.pk %}" target="_blank" class="btn btn-sm btn-ghost">
+      <i class="bi bi-printer"></i> Imprimir
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<div class="card-al p-0 overflow-hidden mb-3">
+  <div class="p-3 pb-0 fw-semibold"><i class="bi bi-box-seam me-1"></i>Materiales solicitados</div>
+  <div class="table-responsive">
+    <table class="table-al mb-0">
+      <thead>
+        <tr><th>#</th><th>Descripción</th><th>Solicitado</th><th>Entregado</th><th>Línea</th></tr>
+      </thead>
+      <tbody>
+        {% for d in detalles %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ d.material.descripcion }}</td>
+          <td class="text-nowrap">{{ d.cantidad_solicitada }} {{ d.unidad.abreviatura }}</td>
+          <td class="text-nowrap">{{ d.cantidad_entregada }} {{ d.unidad.abreviatura }}</td>
+          <td><span class="badge badge-est-{{ d.estado_linea|default:'EMITIDO' }}">{{ d.estado_linea }}</span></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center py-3" style="color:var(--muted);">Sin materiales capturados.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card-al p-3 mb-3">
+  <div class="fw-semibold mb-2"><i class="bi bi-pen me-1"></i>Firmas</div>
+  <div class="row g-2 small">
+    {% for f in firmas_dos %}
+    <div class="col-md-6">
+      <div class="border rounded p-2 text-center" style="border-color:var(--border) !important;">
+        <div class="fw-semibold">{{ f.get_tipo_display }} — {{ f.fecha|date:"d/m/Y H:i" }}</div>
+        {% if vale.estado == "CERRADO" or vale.estado == "CERRADO_CON_FALTANTE" %}
+          {% if f.firma %}
+          <a href="#" data-bs-toggle="modal" data-bs-target="#modalFirma{{ f.pk }}" title="Ampliar">
+            <img src="{{ f.firma.url }}" alt="Firma" loading="lazy" decoding="async"
+                 style="max-height:60px;max-width:100%;background:#f4f4f4;border-radius:6px;padding:4px;" />
+          </a>
+          <div class="modal fade" id="modalFirma{{ f.pk }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" style="max-width:520px;">
+              <div class="modal-content card-al">
+                <div class="modal-body text-center">
+                  <div class="fw-semibold mb-2">{{ f.get_tipo_display }} — {{ f.nombre }}</div>
+                  <img src="{{ f.firma.url }}" alt="Firma {{ f.nombre }}" loading="lazy" decoding="async"
+                       style="max-width:100%;max-height:70vh;object-fit:contain;background:#fff;border-radius:8px;padding:10px;" />
+                </div>
+                <div class="modal-footer border-0 justify-content-center">
+                  <button type="button" class="btn btn-sm btn-ghost" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        {% else %}
+          <div class="small" style="color:var(--muted);">(La imagen se muestra al cerrar el vale)</div>
+        {% endif %}
+        <div><strong>{{ f.nombre }}</strong><br /><span style="color:var(--muted);">{{ f.puesto }}</span></div>
+      </div>
+    </div>
+    {% empty %}
+    <p class="small mb-0" style="color:var(--muted);">Sin firmas todavía. Al emitir se estampa tu firma de “Retirado por”.</p>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="card-al p-3">
+  <div class="fw-semibold mb-2"><i class="bi bi-truck me-1"></i>Entregas de almacén</div>
+  {% for e in entregas %}
+  <div class="border rounded p-2 mb-2 small" style="border-color:var(--border) !important;">
+    <div class="d-flex justify-content-between flex-wrap gap-1">
+      <span><strong>{{ e.fecha|date:"d/m/Y H:i" }}</strong> — {{ e.perfil.nombre }}</span>
+      <span class="badge {% if e.estado == 'ACTIVA' %}badge-est-CERRADO{% else %}badge-est-ANULADO{% endif %}">{{ e.estado }}</span>
+    </div>
+    <ul class="mb-0 mt-1 ps-3">
+      {% for de in e.detalles.all %}
+      <li>{{ de.detalle_vale.material.descripcion }}: {{ de.cantidad }}{% if de.observaciones %} <span style="color:var(--muted);">({{ de.observaciones }})</span>{% endif %}</li>
+      {% endfor %}
+    </ul>
+    {% if e.motivo_anulacion %}
+    <div class="mt-1" style="color:var(--muted);">Motivo anulación: {{ e.motivo_anulacion }}</div>
+    {% endif %}
+  </div>
+  {% empty %}
+  <p class="small mb-0" style="color:var(--muted);">Aún sin entregas registradas.</p>
+  {% endfor %}
+</div>
+
+{% if puede_operar and vale.estado == "BORRADOR" %}
+<div class="modal fade" id="modalFirmar" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:360px;">
+    <div class="modal-content card-al">
+      <form method="post" action="{% url 'almacen:vale_firmar' vale.pk %}">
+        {% csrf_token %}
+        <div class="modal-body text-center">
+          <h2 class="h6 fw-bold">Firmar y emitir</h2>
+          <p class="small" style="color:var(--muted);">
+            Se estampará tu firma como <strong>RETIRADO POR</strong> y se asignará el N° consecutivo. Esta acción no se puede deshacer.
+          </p>
+          <input type="password" name="pin" class="form-control text-center" maxlength="4"
+                 inputmode="numeric" pattern="[0-9]{4}" placeholder="PIN de 4 dígitos"
+                 autocomplete="off" autofocus style="letter-spacing:.5em;font-size:1.4rem;" />
+        </div>
+        <div class="modal-footer border-0 justify-content-center">
+          <button type="button" class="btn btn-sm btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-sm btn-accent"><i class="bi bi-pen-fill me-1"></i>Firmar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% elif puede_operar and vale.estado != "BORRADOR" and not solicitud_pendiente %}
+<div class="modal fade" id="modalAnular" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content card-al">
+      <form method="post" action="{% url 'almacen:solicitud_anulacion' vale.pk %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <h2 class="h6 fw-bold">Solicitar anulación</h2>
+          <p class="small" style="color:var(--muted);">TI revisará tu solicitud. Describe el motivo (mín. 10 caracteres).</p>
+          <textarea name="motivo" class="form-control" rows="3" required minlength="10"></textarea>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-sm btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-sm btn-accent">Enviar solicitud</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

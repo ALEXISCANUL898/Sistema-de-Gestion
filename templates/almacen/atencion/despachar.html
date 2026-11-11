@@ -1,0 +1,118 @@
+{% extends "almacen/base_almacen.html" %}
+{% block title %}Despachar {{ vale.consecutivo }} — ASAP Vales{% endblock %}
+{% block page_title %}
+<a href="{% url 'almacen:panel_detalle' vale.pk %}" class="btn btn-sm btn-ghost me-2"><i class="bi bi-arrow-left"></i></a>
+Despachar vale N° {{ vale.consecutivo }}
+{% endblock %}
+{% block nav_bandeja %}active{% endblock %}
+
+{% block content %}
+<form method="post" autocomplete="off">
+  {% csrf_token %}
+
+  <div class="card-al p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+      <span class="fw-semibold"><i class="bi bi-card-heading me-1"></i>VALE DE SALIDA</span>
+      <span class="small" style="color:var(--muted);">Emitido: {{ vale.fecha|date:"d / m / Y H:i" }}</span>
+    </div>
+    <div class="row g-2 small">
+      <div class="col-6 col-md-3"><strong>Movimiento:</strong><br />{{ vale.tipo_movimiento }}{% if vale.tipo_detalle %} ({{ vale.tipo_detalle }}){% endif %}</div>
+      <div class="col-6 col-md-3"><strong>Empresa:</strong><br />{{ vale.empresa|default:"—" }}</div>
+      <div class="col-6 col-md-3"><strong>Área:</strong><br />{{ vale.area|default:"—" }}</div>
+      <div class="col-6 col-md-3"><strong>Plano / Otro:</strong><br />{{ vale.plano|default:"—" }} {{ vale.dato_otro }}</div>
+      <div class="col-12"><strong>Retirado por (solicitante):</strong> {{ vale.creado_por.nombre }} <span style="color:var(--muted);">({{ vale.creado_por.puesto }})</span></div>
+    </div>
+    {% if vale.notas %}<div class="mt-2 small"><strong>Nota:</strong><br />{{ vale.notas|linebreaksbr }}</div>{% endif %}
+    <div class="alert alert-info small py-2 mt-2 mb-0">
+      Capturas lo reportado en papel por <strong>{% if vigente %}{{ vigente.asignado_a.nombre }}{% else %}almacén{% endif %}</strong>.
+      La entrega física queda a su nombre; tu firma de encargado respalda el registro.
+    </div>
+  </div>
+
+  <div class="card-al p-0 overflow-hidden mb-3">
+    <div class="p-3 pb-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <span class="fw-semibold"><i class="bi bi-box-seam me-1"></i>Materiales</span>
+      <span class="small" style="color:var(--muted);">Lo solicitado es solo lectura — captura lo que entregas ahora.</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table-al mb-0">
+        <thead>
+          <tr><th style="width:36px;">#</th><th>Descripción</th><th>Solicitado</th><th>Entregado</th><th>Pendiente</th><th style="min-width:140px;">Entregar ahora</th><th>Unidad</th></tr>
+        </thead>
+        <tbody>
+          {% for d in detalles %}
+          <tr>
+            <td class="text-center" style="color:var(--muted);">{{ forloop.counter }}</td>
+            <td>{{ d.material.descripcion }}</td>
+            <td class="text-nowrap">{{ d.cantidad_solicitada }}</td>
+            <td class="text-nowrap">{{ d.cantidad_entregada }}</td>
+            <td class="text-nowrap fw-semibold">{{ d.pendiente }}</td>
+            <td>
+              <input type="number" name="cant_{{ d.pk }}" class="form-control form-control-sm cant-now"
+                     min="0" step="0.01" data-pend="{{ d.pendiente }}" placeholder="0.00" />
+            </td>
+            <td class="text-nowrap">{{ d.unidad.abreviatura|default:d.unidad.nombre }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card-al p-3 mb-3">
+    <label class="form-label" for="observaciones">Observaciones de la entrega</label>
+    <input type="text" name="observaciones" id="observaciones" class="form-control" maxlength="255"
+           placeholder='Ej. "faltan 20 bolsas, llegan el jueves"' />
+  </div>
+
+  <div class="card-al p-3 mb-3" id="sobre-card" style="display:none;border-color:var(--accent) !important;">
+    <div class="fw-semibold mb-1"><i class="bi bi-exclamation-triangle me-1"></i>Sobre-entrega detectada</div>
+    <p class="small" style="color:var(--muted);">Entregas más de lo pendiente: requiere motivo y PIN de un encargado autorizador. Se registra en bitácora como aviso a Gerencia.</p>
+    <div class="row g-2">
+      <div class="col-md-6">
+        <label class="form-label">Motivo (mín. 10 caracteres)</label>
+        <input type="text" name="sobre_motivo" class="form-control" maxlength="255" />
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Encargado que autoriza</label>
+        <select name="sobre_encargado" class="form-select">
+          <option value="">—</option>
+          {% for e in encargados %}<option value="{{ e.pk }}">{{ e.nombre }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">PIN del encargado</label>
+        <input type="password" name="sobre_pin" class="form-control text-center" maxlength="4" inputmode="numeric" pattern="[0-9]{4}" autocomplete="off" style="letter-spacing:.4em;" />
+      </div>
+    </div>
+  </div>
+
+  <div class="card-al p-3 mb-4">
+    <div class="fw-semibold mb-1">Firmar entrega con tu PIN</div>
+    <p class="small" style="color:var(--muted);">Quien recibe es el solicitante del vale; no se pide su firma ni PIN.</p>
+    <div class="d-flex gap-2 flex-wrap">
+      <input type="password" name="pin" class="form-control text-center" maxlength="4" inputmode="numeric"
+             pattern="[0-9]{4}" placeholder="Tu PIN" autocomplete="off" required
+             style="letter-spacing:.5em;font-size:1.2rem;max-width:280px;" />
+      <button type="submit" class="btn btn-accent flex-grow-1"><i class="bi bi-truck me-1"></i>Registrar entrega</button>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const inputs = document.querySelectorAll('.cant-now');
+  const card = document.getElementById('sobre-card');
+  function checkSobre() {
+    let hay = false;
+    inputs.forEach(i => {
+      const v = parseFloat((i.value || '').replace(',', '.'));
+      const p = parseFloat(i.dataset.pend);
+      if (!isNaN(v) && v > 0 && !isNaN(p) && v > p) hay = true;
+    });
+    card.style.display = hay ? '' : 'none';
+  }
+  inputs.forEach(i => i.addEventListener('input', checkSobre));
+</script>
+{% endblock %}

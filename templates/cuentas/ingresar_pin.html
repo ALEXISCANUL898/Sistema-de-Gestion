@@ -1,0 +1,136 @@
+{% extends "cuentas/base_auth.html" %}
+
+{% block title %}Ingresar PIN — {% firstof perfil.nombre perfil.nombre_completo %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .pin-input {
+    letter-spacing: .5em;
+    font-size: 1.6rem;
+    text-align: center;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    color: #e6edf3;
+    border-radius: 8px;
+    padding: .6rem 1rem;
+    width: 100%;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .pin-input:focus { border-color: var(--asap-accent); }
+  .dots-row { display: flex; justify-content: center; gap: .75rem; margin-bottom: 1rem; }
+  .dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: #30363d;
+    transition: background .15s;
+  }
+  .dot.filled { background: var(--asap-accent); }
+  .avatar-wrap {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin: 0 auto;
+    border: 2px solid var(--asap-border);
+    background: #21262d;
+    display: flex; align-items: center; justify-content: center;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-card p-4 p-md-5">
+  <div class="text-center mb-4">
+    <div class="avatar-wrap mb-3">
+      {% if perfil.firma_url %}
+        <img src="{{ perfil.firma_url }}" alt="{% firstof perfil.nombre perfil.nombre_completo %}"
+             style="width:64px;height:64px;object-fit:cover;" />
+      {% else %}
+        <i class="bi bi-person-fill text-muted" style="font-size:1.8rem;"></i>
+      {% endif %}
+    </div>
+    <h1 class="h5 fw-bold mb-0">{% firstof perfil.nombre perfil.nombre_completo %}</h1>
+    <p class="text-muted small">{{ perfil.puesto }}</p>
+  </div>
+
+  {% if error %}
+    <div class="alert alert-danger py-2 small text-center" id="pin-error">
+      <i class="bi bi-x-circle-fill me-1"></i>{{ error }}
+    </div>
+  {% endif %}
+
+  <form method="post" autocomplete="off" novalidate id="pin-form">
+    {% csrf_token %}
+    <div class="dots-row" id="dots-row">
+      <div class="dot" id="d1"></div>
+      <div class="dot" id="d2"></div>
+      <div class="dot" id="d3"></div>
+      <div class="dot" id="d4"></div>
+    </div>
+
+    <div class="mb-4">
+      <input
+        type="password"
+        name="pin"
+        id="id_pin"
+        class="pin-input"
+        maxlength="4"
+        inputmode="numeric"
+        pattern="[0-9]{4}"
+        placeholder="• • • •"
+        autofocus
+        autocomplete="off"
+      />
+    </div>
+
+    <button type="submit" class="btn btn-asap w-100 py-2" id="btn-confirmar-pin">
+      <i class="bi bi-key-fill me-1"></i>Confirmar PIN
+    </button>
+  </form>
+
+  <div class="text-center mt-3">
+    <a href="{% url 'cuentas:seleccionar_perfil' %}" class="text-muted small text-decoration-none"
+       id="btn-otro-perfil">
+      <i class="bi bi-arrow-left me-1"></i>Otro perfil
+    </a>
+  </div>
+
+  <div id="pin-loader" class="d-none text-center mt-3">
+    <div class="spinner-border" role="status" style="color:var(--asap-accent);"></div>
+    <div class="small mt-1" style="color:var(--asap-accent);">Verificando PIN…</div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const input = document.querySelector('#id_pin');
+  const dots = document.querySelectorAll('.dot');
+  const pinForm = document.getElementById('pin-form');
+  const pinBtn = document.getElementById('btn-confirmar-pin');
+  const pinLoader = document.getElementById('pin-loader');
+  function mostrarCargando() {
+    pinBtn.disabled = true;
+    pinBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Verificando…';
+    pinLoader.classList.remove('d-none');
+    input.readOnly = true;
+  }
+  if (pinForm) {
+    pinForm.addEventListener('submit', mostrarCargando);
+  }
+  if (input) {
+    input.addEventListener('input', () => {
+      // Solo permitir dígitos
+      input.value = input.value.replace(/\D/g, '').slice(0, 4);
+      const len = input.value.length;
+      dots.forEach((d, i) => d.classList.toggle('filled', i < len));
+    });
+    // Auto-submit al completar 4 dígitos
+    input.addEventListener('input', () => {
+      if (input.value.length === 4) {
+        setTimeout(() => pinForm.requestSubmit(), 150);
+      }
+    });
+  }
+</script>
+{% endblock %}

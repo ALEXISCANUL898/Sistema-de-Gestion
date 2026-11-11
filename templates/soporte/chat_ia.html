@@ -1,0 +1,108 @@
+{% extends 'soporte/base.html' %}
+{% load static %}
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card border-0 shadow-sm" style="height: 70vh;">
+                <div class="card-header bg-white">
+                    <h4 class="mb-0"><i class="bi bi-robot"></i> Chat IA - Análisis de Reportes</h4>
+                    <small class="text-muted">Pregunta sobre estadísticas, tendencias y genera reportes</small>
+                </div>
+                <div class="card-body d-flex flex-column" id="chatContainer">
+                    {% csrf_token %}
+                    <div id="chatMessages" class="flex-grow-1 overflow-auto mb-3" style="max-height: 60vh;">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Bienvenido al Chat de IA</strong><br>
+                            Puedes preguntarme sobre:<br>
+                            - Estadísticas de tickets por fecha, nivel o prioridad<br>
+                            - Porcentajes y tendencias<br>
+                            - Comparaciones entre períodos<br>
+                            - Resúmenes ejecutivos<br>
+                            - Cualquier análisis de datos que necesites
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="userMessage" 
+                               placeholder="Escribe tu pregunta sobre los datos..." 
+                               onkeypress="if(event.key==='Enter')sendMessage()">
+                        <button class="btn btn-primary" type="button" onclick="sendMessage()">
+                            <i class="bi bi-send"></i> Enviar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let isLoading = false;
+
+function appendMessage(content, isUser = false) {
+    const container = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = isUser ? 'alert alert-primary me-4' : 'alert alert-light border';
+    
+    if (isUser) {
+        messageDiv.innerHTML = '<strong>Tú:</strong> ' + content;
+    } else {
+        // Convertir saltos de línea a <br>
+        const formattedContent = content.replace(/\n/g, '<br>');
+        messageDiv.innerHTML = '<strong>IA:</strong><br>' + formattedContent;
+    }
+    
+    container.appendChild(messageDiv);
+    container.scrollTop = container.scrollHeight;
+}
+
+async function sendMessage() {
+    if (isLoading) return;
+    
+    const input = document.getElementById('userMessage');
+    const message = input.value.trim();
+    
+    if (!message) return;
+    
+    isLoading = true;
+    appendMessage(message, true);
+    input.value = '';
+    
+    // Mostrar indicador de carga
+    const loadingDiv = document.createElement('div');
+    loadingDiv.id = 'loadingMessage';
+    loadingDiv.className = 'alert alert-warning';
+    loadingDiv.innerHTML = '<i class="bi bi-hourglass-split me-2"></i> Analizando datos...';
+    document.getElementById('chatMessages').appendChild(loadingDiv);
+    
+    try {
+        const response = await fetch('{% url "chat_ia_api" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({ message: message })
+        });
+        
+        const data = await response.json();
+        
+        // Remover indicador de carga
+        document.getElementById('loadingMessage').remove();
+        
+        if (data.success) {
+            appendMessage(data.response, false);
+        } else {
+            appendMessage('Error: ' + (data.error || 'Error desconocido'), false);
+        }
+    } catch (error) {
+        document.getElementById('loadingMessage').remove();
+        appendMessage('Error de conexión: ' + error.message, false);
+    }
+    
+    isLoading = false;
+}
+</script>
+{% endblock %}

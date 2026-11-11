@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Reportes ENKONTROL{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="bi bi-graph-up"></i> Reportes Enkontrol</h2>
+        <a href="{% url 'econtrol_soporte_dashboard' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver al Panel
+        </a>
+    </div>
+
+    <!-- Filtros de fecha -->
+    <div class="card mb-4 shadow-sm border-0">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="fecha_inicio" class="form-label fw-bold">Fecha Inicio</label>
+                    <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio" value="{{ fecha_inicio }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="fecha_fin" class="form-label fw-bold">Fecha Fin</label>
+                    <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" value="{{ fecha_fin }}">
+                </div>
+                <div class="col-md-4 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i> Filtrar
+                    </button>
+                    <a href="{% url 'econtrol_exportar_excel' %}?fecha_inicio={{ fecha_inicio }}&fecha_fin={{ fecha_fin }}" class="btn btn-success" target="_blank">
+                        <i class="bi bi-file-earmark-excel"></i> Excel
+                    </a>
+                    <a href="{% url 'econtrol_exportar_pdf' %}?fecha_inicio={{ fecha_inicio }}&fecha_fin={{ fecha_fin }}" class="btn btn-danger" target="_blank">
+                        <i class="bi bi-file-earmark-pdf"></i> PDF
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Estadísticas generales -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-white" style="background: linear-gradient(135deg, #2c5282 0%, #1e3a5f 100%);">
+                <div class="card-body text-center">
+                    <h6 class="mb-2">Total Tickets</h6>
+                    <h2 class="mb-0 fw-bold">{{ total_tickets }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-warning bg-opacity-10">
+                <div class="card-body text-center">
+                    <h6 class="text-warning-emphasis mb-2">Abiertos</h6>
+                    <h2 class="mb-0 text-warning-emphasis fw-bold">{{ abiertos }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-info bg-opacity-10">
+                <div class="card-body text-center">
+                    <h6 class="text-info-emphasis mb-2">En Progreso</h6>
+                    <h2 class="mb-0 text-info-emphasis fw-bold">{{ en_progreso }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-success bg-opacity-10">
+                <div class="card-body text-center">
+                    <h6 class="text-success mb-2">Cerrados</h6>
+                    <h2 class="mb-0 text-success fw-bold">{{ cerrados }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Por nivel y prioridad -->
+    <div class="row mb-4">
+        <!-- Por nivel -->
+        <div class="col-md-6 mb-4 mb-md-0">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0 fw-bold text-secondary">Tickets por Nivel</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="badge bg-secondary">Nivel 1</span>
+                            <span class="fw-bold">{{ nivel_1 }}</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-secondary" role="progressbar" style="width: {% if total_tickets %}{{ nivel_1|porcentaje:total_tickets }}{% else %}0{% endif %}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="badge bg-info">Nivel 2</span>
+                            <span class="fw-bold">{{ nivel_2 }}</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-info" role="progressbar" style="width: {% if total_tickets %}{{ nivel_2|porcentaje:total_tickets }}{% else %}0{% endif %}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="badge bg-warning text-dark">Nivel 3</span>
+                            <span class="fw-bold">{{ nivel_3 }}</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: {% if total_tickets %}{{ nivel_3|porcentaje:total_tickets }}{% else %}0{% endif %}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-0">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="badge bg-danger">Nivel 4</span>
+                            <span class="fw-bold">{{ nivel_4 }}</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: {% if total_tickets %}{{ nivel_4|porcentaje:total_tickets }}{% else %}0{% endif %}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Por prioridad -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0 fw-bold text-secondary">Tickets por Prioridad</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="badge bg-danger">Crítica</span>
+                            <span class="fw-bold">{{ prioridad_critica }}</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: {% if total_tickets %}{{ prioridad_critica|porcentaje:total_tickets }}{% else %}0{% endif %}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="badge bg-warning text-dark">Urgente</span>
+                            <span class="fw-bold">{{ prioridad_urgente }}</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: {% if total_tickets %}{{ prioridad_urgente|porcentaje:total_tickets }}{% else %}0{% endif %}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="badge bg-info">Alta</span>
+                            <span class="fw-bold">{{ prioridad_alta }}</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-info" role="progressbar" style="width: {% if total_tickets %}{{ prioridad_alta|porcentaje:total_tickets }}{% else %}0{% endif %}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-0">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="badge bg-secondary">Media</span>
+                            <span class="fw-bold">{{ prioridad_media }}</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-secondary" role="progressbar" style="width: {% if total_tickets %}{{ prioridad_media|porcentaje:total_tickets }}{% else %}0{% endif %}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tiempo promedio y categorías -->
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm text-center py-4 h-100">
+                <div class="card-body">
+                    <h6 class="text-muted mb-3">Tiempo Promedio de Resolución</h6>
+                    {% if tiempo_promedio %}
+                        <h1 class="text-primary fw-bold mb-0">{{ tiempo_promedio|floatformat:1 }}</h1>
+                        <span class="text-muted">Horas</span>
+                    {% else %}
+                        <p class="text-muted mb-0">Sin datos suficientes</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0 fw-bold text-secondary">Categorías más comunes</h5>
+                </div>
+                <div class="card-body">
+                    {% if categorias %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Categoría</th>
+                                    <th class="text-center">Tickets</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cat in categorias %}
+                                <tr>
+                                    <td>{{ cat.category|default:"Sin categoría" }}</td>
+                                    <td class="text-center"><span class="badge bg-primary rounded-pill px-3">{{ cat.count }}</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-4">No hay datos de categorías registrados en este periodo.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

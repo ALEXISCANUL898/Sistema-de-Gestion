@@ -1,0 +1,102 @@
+{% extends "cuentas/base_auth.html" %}
+
+{% block title %}Seleccionar perfil — ASAP Vales{% endblock %}
+
+{% block extra_head %}
+<style>
+  .perfil-card {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: border-color .2s, transform .15s, box-shadow .15s;
+    text-decoration: none; color: inherit;
+    display: block;
+  }
+  .perfil-card:hover {
+    border-color: var(--asap-accent);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(232,160,32,.2);
+    color: inherit;
+  }
+  .perfil-avatar {
+    width: 52px; height: 52px;
+    background: linear-gradient(135deg, #21262d, #30363d);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; flex-shrink: 0;
+  }
+  .badge-rol {
+    font-size: .65rem; padding: .25em .6em;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-card p-4">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h1 class="h5 fw-bold mb-0">¿Quién eres?</h1>
+      <p class="text-muted small mb-0">Cuenta: <strong>{{ request.user.username }}</strong></p>
+    </div>
+    <a href="{% url 'cuentas:logout' %}" class="btn btn-sm btn-outline-secondary" id="btn-logout-selector">
+      <i class="bi bi-box-arrow-right me-1"></i>Salir
+    </a>
+  </div>
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="alert alert-danger py-2 small mb-3">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ msg }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {% if error_api %}
+    <div class="alert alert-warning py-2 small mb-3">
+      <i class="bi bi-wifi-off me-1"></i>{{ error_api }}
+    </div>
+  {% endif %}
+
+  {% if perfiles %}
+    <div class="d-flex flex-column gap-3">
+      {% for perfil in perfiles %}
+        {# perfil puede ser dict (API Central) o instancia ORM (fallback local) #}
+        {% with perfil_id=perfil.id %}
+        <a href="{% url 'cuentas:ingresar_pin' perfil_id %}"
+           class="perfil-card p-3"
+           id="perfil-{{ perfil_id }}">
+          <div class="d-flex align-items-center gap-3">
+            <div class="perfil-avatar">
+              {% if perfil.firma_url %}
+                <img src="{{ perfil.firma_url }}" alt="{{ perfil.nombre }}"
+                     class="rounded-circle" style="width:52px;height:52px;object-fit:cover;" />
+              {% else %}
+                <i class="bi bi-person-fill text-muted"></i>
+              {% endif %}
+            </div>
+            <div class="flex-grow-1 min-width-0">
+              <div class="fw-semibold text-truncate">{{ perfil.nombre }}</div>
+              <div class="text-muted small">{{ perfil.puesto }}</div>
+            </div>
+            <div class="d-flex flex-column align-items-end gap-1">
+              {% if perfil.rol_almacen == "ENCARGADO" %}
+                <span class="badge bg-warning text-dark badge-rol">Encargado</span>
+              {% elif perfil.rol_almacen == "DESPACHADOR" %}
+                <span class="badge bg-info badge-rol">Despachador</span>
+              {% endif %}
+            </div>
+          </div>
+        </a>
+        {% endwith %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-person-x display-4 d-block mb-2"></i>
+      No tienes perfiles activos asignados.<br>
+      <span class="small">Contacta al administrador de TI.</span>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

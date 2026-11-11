@@ -1,0 +1,40 @@
+{% extends "almacen/ti/base_ti.html" %}
+{% block title %}Editar Cuenta — Panel TI{% endblock %}
+{% block page_title %}Editar Cuenta: {{ cuenta.username }}{% endblock %}
+{% block nav_cuentas %}active{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="ti-card">
+      <div class="ti-card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-pencil-square me-2" style="color:var(--ti-accent);"></i>Editar cuenta</span>
+        <a href="{% url 'cuentas:ti_cuentas' %}" class="btn btn-ti-outline btn-sm"><i class="bi bi-arrow-left"></i> Volver</a>
+      </div>
+      <div class="p-4">
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+              <div class="small mt-1" style="color:var(--ti-danger);">{{ field.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+          {% if form.non_field_errors %}
+          <div class="alert alert-ti-danger small py-2">{{ form.non_field_errors|join:"<br>" }}</div>
+          {% endif %}
+          <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-ti flex-fill"><i class="bi bi-save me-1"></i>Guardar cambios</button>
+            <a href="{% url 'cuentas:ti_perfiles' cuenta.pk %}" class="btn btn-ti-outline flex-fill">
+              <i class="bi bi-people me-1"></i>Ver perfiles
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

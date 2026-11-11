@@ -1,0 +1,16 @@
+{
+  "name": "Intranet - Yucasa Desarrollos",
+  "short_name": "Yucasa Intranet",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#c5a059",
+  "icons": [
+    {
+      "src": "/static/img/logo_yucasa.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

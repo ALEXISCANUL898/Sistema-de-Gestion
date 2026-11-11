@@ -1,0 +1,100 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Enkontrol{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{% static 'img/logo_yucasa.png' %}" />
+    <link rel="apple-touch-icon" href="{% static 'img/logo_yucasa.png' %}" />
+    <link rel="manifest" href="{% static 'manifest.json' %}" />
+    <link
+      href="{% static 'css/bootstrap.min.css' %}"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="{% static 'icons/bootstrap-icons.min.css' %}"
+    />
+    <link
+      rel="stylesheet"
+      href="{% static 'css/custom.css' %}"
+    />
+    <link rel="stylesheet" href="{% static 'css/tokens.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/componentes.css' %}" />
+    <style>
+      body {
+        background-color: #f5f7fa;
+      }
+    </style>
+  </head>
+  <body>
+    <nav
+      class="navbar navbar-expand-lg navbar-dark"
+      style="background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%)"
+    >
+      <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="{% url 'econtrol_dashboard' %}">
+          <i class="bi bi-building"></i> Enkontrol
+        </a>
+        <!-- Botón hamburger para móvil -->
+        <button
+          class="navbar-toggler border-0"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarMain"
+          aria-controls="navbarMain"
+          aria-expanded="false"
+          aria-label="Abrir menú de navegación"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarMain">
+          <div class="navbar-nav me-auto">
+            {% if request.user.is_superuser or request.user.is_staff %}
+            <a class="nav-link" href="{% url 'econtrol_soporte_dashboard' %}"{% if request.resolver_match.url_name == 'econtrol_soporte_dashboard' %} aria-current="page"{% endif %}>
+              <i class="bi bi-grid"></i> Panel Soporte
+            </a>
+            <a class="nav-link" href="{% url 'econtrol_cerrados_tickets' %}"{% if request.resolver_match.url_name == 'econtrol_cerrados_tickets' %} aria-current="page"{% endif %}>
+              <i class="bi bi-check-circle"></i> Tickets Cerrados
+            </a>
+            <a class="nav-link" href="{% url 'econtrol_reportes' %}"{% if request.resolver_match.url_name == 'econtrol_reportes' %} aria-current="page"{% endif %}>
+              <i class="bi bi-graph-up"></i> Reportes
+            </a>
+            <a class="nav-link" href="{% url 'econtrol_chat_ia' %}"{% if request.resolver_match.url_name == 'econtrol_chat_ia' %} aria-current="page"{% endif %}>
+              <i class="bi bi-robot"></i> Chat IA
+            </a>
+            {% else %}
+            <a class="nav-link" href="{% url 'econtrol_dashboard' %}"{% if request.resolver_match.url_name == 'econtrol_dashboard' %} aria-current="page"{% endif %}>
+              <i class="bi bi-ticket-detailed"></i> Mis Tickets
+            </a>
+            <a class="nav-link" href="{% url 'econtrol_crear_ticket' %}"{% if request.resolver_match.url_name == 'econtrol_crear_ticket' %} aria-current="page"{% endif %}>
+              <i class="bi bi-plus-circle"></i> Nuevo Ticket
+            </a>
+            <a class="nav-link" href="{% url 'econtrol_cerrados_tickets' %}"{% if request.resolver_match.url_name == 'econtrol_cerrados_tickets' %} aria-current="page"{% endif %}>
+              <i class="bi bi-check-circle"></i> Tickets Cerrados
+            </a>
+
+            {% endif %}
+          </div>
+          <!-- Usuario y logout al final del menú colapsado -->
+          <div class="d-flex align-items-center mt-2 mt-lg-0">
+            <span class="text-light me-3 small">
+              <i class="bi bi-person-circle me-1"></i>{{ request.user.username }}
+            </span>
+            <a class="btn btn-outline-light btn-sm" href="{% url 'logout' %}">
+              <i class="bi bi-box-arrow-right"></i>
+              <span class="d-none d-sm-inline">Cerrar Sesión</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container-fluid mt-3 px-md-3">
+      {% block content %}{% endblock %}
+    </div>
+
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+  </body>
+</html>

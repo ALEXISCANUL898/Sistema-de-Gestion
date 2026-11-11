@@ -1,0 +1,199 @@
+{% extends 'soporte/base.html' %}
+{% load static %}
+{% block content %}
+    <div class="container mt-4">
+        <div class="page-header">
+            <div class="page-header__texto">
+                <h1><i class="bi bi-check-circle text-success"></i> Tickets Cerrados</h1>
+                <p class="page-header__desc">Historial de tickets resueltos. Consulta lo que se atendió y cuándo.</p>
+            </div>
+            <div class="page-header__acciones">
+                {% if request.user.is_superuser %}
+                <a href="{% url 'support_dashboard' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver al panel
+                </a>
+                {% else %}
+                <a href="{% url 'listikets' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver a mis tickets
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h2 class="h5 mb-0"><i class="bi bi-clock-history me-2"></i>Historial</h2>
+            </div>
+            <div class="card-body p-3" id="ticketsContainer">
+                {% for ticket in tickets %}
+                <div class="ticket-card border-cerrado">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="ticket-id"><span class="text-muted">#</span>{{ ticket.id }}</div>
+                        <span class="badge-estado badge-estado--cerrado">Cerrado</span>
+                    </div>
+                    <div class="ticket-title">
+                        <a class="ticket-card__enlace" href="{% url 'ticket_detail' ticket.id %}"><strong>{{ ticket.title }}</strong></a>
+                    </div>
+                    <div class="ticket-meta">
+                        {% if is_support %}
+                        <span class="text-dark fw-semibold"><i class="bi bi-person-fill me-1"></i>{{ ticket.usuario }}</span>
+                        <span class="text-muted">·</span>
+                        {% endif %}
+                        <span class="badge bg-{% if ticket.nivel == 4 %}danger{% elif ticket.nivel == 3 %}warning{% elif ticket.nivel == 2 %}info{% else %}secondary{% endif %}">
+                            Nivel {{ ticket.nivel }}
+                        </span>
+                        <span class="text-muted">·</span>
+                        <span class="badge bg-{% if ticket.priority == 'Crítica' %}danger{% elif ticket.priority == 'Urgente' %}warning{% elif ticket.priority == 'Alta' %}info{% else %}secondary{% endif %}">
+                            {{ ticket.priority }}
+                        </span>
+                    </div>
+                    <div class="ticket-footer">
+                        <small class="text-muted"><i class="bi bi-calendar-check me-1"></i>{{ ticket.updated_at|date:"d/m/Y" }}</small>
+                        <a href="{% url 'ticket_detail' ticket.id %}" class="btn btn-sm btn-outline-secondary">
+                            Ver <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="estado-vacio">
+                    <i class="bi bi-check-circle estado-vacio__icono"></i>
+                    <p class="estado-vacio__titulo">No hay tickets cerrados</p>
+                    <p class="estado-vacio__texto">Cuando se resuelva un ticket aparecerá en este historial.</p>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="card-footer bg-white py-3 border-top d-flex justify-content-between align-items-center">
+                <span class="text-muted small">
+                    Página {{ tickets.number }} de {{ tickets.paginator.num_pages }} (Total: {{ tickets.paginator.count }} ticket{{ tickets.paginator.count|pluralize:"s" }})
+                </span>
+                {% if tickets.has_other_pages %}
+                <nav aria-label="Navegación de páginas">
+                    <ul class="pagination mb-0">
+                        {% if tickets.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link shadow-sm" href="?page=1" aria-label="Primero">
+                                <i class="bi bi-chevron-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link shadow-sm" href="?page={{ tickets.previous_page_number }}" aria-label="Anterior">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link text-muted"><i class="bi bi-chevron-double-left"></i></span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link text-muted"><i class="bi bi-chevron-left"></i></span>
+                        </li>
+                        {% endif %}
+
+                        {% for num in tickets.paginator.page_range %}
+                            {% if tickets.number == num %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                            {% elif num > tickets.number|add:'-3' and num < tickets.number|add:'3' %}
+                            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if tickets.has_next %}
+                        <li class="page-item">
+                            <a class="page-link shadow-sm" href="?page={{ tickets.next_page_number }}" aria-label="Siguiente">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link shadow-sm" href="?page={{ tickets.paginator.num_pages }}" aria-label="Último">
+                                <i class="bi bi-chevron-double-right"></i>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link text-muted"><i class="bi bi-chevron-right"></i></span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link text-muted"><i class="bi bi-chevron-double-right"></i></span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function getBadgeClass(value, type) {
+        if (type === 'nivel') {
+            if (value == 4) return 'danger';
+            if (value == 3) return 'warning';
+            if (value == 2) return 'info';
+            return 'secondary';
+        }
+        if (type === 'priority') {
+            if (value === 'Crítica') return 'danger';
+            if (value === 'Urgente') return 'warning';
+            if (value === 'Alta') return 'info';
+            return 'secondary';
+        }
+        return 'secondary';
+    }
+
+    function renderTickets(tickets) {
+        const container = document.getElementById('ticketsContainer');
+        if (!container) return;
+        
+        if (tickets.length === 0) {
+            container.innerHTML = `
+                <div class="estado-vacio">
+                    <i class="bi bi-check-circle estado-vacio__icono"></i>
+                    <p class="estado-vacio__titulo">No hay tickets cerrados</p>
+                    <p class="estado-vacio__texto">Cuando se resuelva un ticket aparecerá en este historial.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '';
+        tickets.forEach(ticket => {
+            const hasUsuario = ticket.hasOwnProperty('usuario');
+            html += `
+                <div class="ticket-card border-cerrado">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="ticket-id"><span class="text-muted">#</span>${ticket.id}</div>
+                        <span class="badge-estado badge-estado--cerrado">Cerrado</span>
+                    </div>
+                    <div class="ticket-title">
+                        <a class="ticket-card__enlace" href="/ticket/${ticket.id}/"><strong>${ticket.title}</strong></a>
+                    </div>
+                    <div class="ticket-meta">
+                        ${hasUsuario ? `<span class="text-dark fw-semibold"><i class="bi bi-person-fill me-1"></i>${ticket.usuario}</span><span class="text-muted">·</span>` : ''}
+                        <span class="badge bg-${getBadgeClass(ticket.nivel, 'nivel')}">Nivel ${ticket.nivel}</span>
+                        <span class="text-muted">·</span>
+                        <span class="badge bg-${getBadgeClass(ticket.priority, 'priority')}">${ticket.priority}</span>
+                    </div>
+                    <div class="ticket-footer">
+                        <small class="text-muted"><i class="bi bi-calendar-check me-1"></i>${ticket.updated_at.split(' ')[0]}</small>
+                        <a href="/ticket/${ticket.id}/" class="btn btn-sm btn-outline-secondary">Ver <i class="bi bi-arrow-right"></i></a>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function fetchTickets() {
+        fetch('/api/tickets/closed/?page={{ tickets.number }}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    renderTickets(data.tickets);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    setInterval(() => { if (!document.hidden) fetchTickets(); }, 30000);
+    </script>
+{% endblock %}

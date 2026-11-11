@@ -1,0 +1,142 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-gray-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Intranet Yucasa{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{% static 'img/logo_yucasa.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'img/logo_yucasa.png' %}">
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+   
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'icons/bootstrap-icons.min.css' %}">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        fbBlue: '#1877f2',
+                        fbBg: '#f0f2f5',
+                        fbHover: '#e4e6eb',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f0f2f5;
+        }
+        /* Hide scrollbars for sidebars but keep functionality */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="antialiased min-h-screen flex flex-col font-sans text-gray-900 bg-gray-100">
+
+   
+    <header class="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm h-14 flex items-center justify-between px-4">
+       
+        <div class="flex items-center gap-2 flex-1 md:flex-initial">
+            <a href="{% url 'intranet_mural' %}" class="flex items-center justify-center bg-blue-600 text-white rounded-full w-10 h-10 shadow-sm transition-transform hover:scale-105">
+                <i class="bi bi-globe text-xl"></i>
+            </a>
+            <div class="relative hidden sm:block">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" placeholder="Buscar en Intranet..." class="bg-gray-100 hover:bg-gray-200/80 focus:bg-white focus:ring-2 focus:ring-blue-500 rounded-full pl-9 pr-4 py-2 text-sm w-60 transition-all border-none focus:outline-none text-gray-700">
+            </div>
+        </div>
+
+
+       
+        <div class="flex items-center gap-3 justify-end flex-1 md:flex-initial">
+            {% if user.is_authenticated %}
+                <a href="{% url 'intranet_create' %}" class="hidden lg:flex items-center gap-2 bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-1.5 rounded-full text-sm font-semibold transition-all">
+                    <i class="bi bi-plus-lg"></i> Crear Publicación
+                </a>
+                <a href="{% url 'intranet_create' %}" class="lg:hidden flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full w-10 h-10 transition-all" title="Crear Publicación">
+                    <i class="bi bi-plus-lg text-lg"></i>
+                </a>
+                <div class="flex items-center gap-2 border-l pl-3 border-gray-200">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm select-none border border-blue-200">
+                            {{ user.username|slice:":1"|upper }}
+                        </div>
+                        <span class="text-sm font-semibold text-gray-700 hidden sm:inline max-w-[100px] truncate">
+                            {{ user.username }}
+                        </span>
+                    </div>
+                    <a href="{% url 'logout' %}" class="flex items-center justify-center bg-gray-100 hover:bg-red-50 hover:text-red-600 text-gray-500 rounded-full w-10 h-10 transition-all" title="Cerrar Sesión">
+                        <i class="bi bi-box-arrow-right text-lg"></i>
+                    </a>
+                </div>
+            {% else %}
+                <a href="{% url 'intranet_login' %}?next={% url 'intranet_mural' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full text-sm font-semibold shadow-sm transition-all">
+                    Iniciar Sesión
+                </a>
+            {% endif %}
+        </div>
+    </header>
+
+
+    <div class="flex-grow w-full max-w-[1250px] mx-auto px-4 py-5 grid grid-cols-1 md:grid-cols-12 gap-6">
+        
+    
+        <aside class="hidden md:block md:col-span-3 sticky top-[76px] h-[calc(100vh-100px)] overflow-y-auto no-scrollbar pb-6">
+            <div class="space-y-6">
+                
+                {% if user.is_authenticated %}
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-200/80 flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-lg border-2 border-white shadow">
+                        {{ user.username|slice:":1"|upper }}
+                    </div>
+                    <div class="overflow-hidden">
+                        <h4 class="font-bold text-gray-800 leading-tight truncate">{{ user.username }}</h4>
+                        <span class="text-xs text-green-500 flex items-center gap-1 font-medium mt-0.5">
+                            <span class="w-2 h-2 rounded-full bg-green-500 inline-block animate-pulse"></span> Activo ahora
+                        </span>
+                    </div>
+                </div>
+                {% endif %}
+        </aside>
+
+        
+        
+        <main class="col-span-1 md:col-span-9 xl:col-span-6 w-full max-w-[620px] mx-auto space-y-5 pb-10">
+            {% if messages %}
+                <div class="space-y-3">
+                    {% for message in messages %}
+                        <div class="p-4 rounded-xl shadow-sm border flex items-center justify-between {% if message.tags == 'success' %}bg-green-50 text-green-800 border-green-200{% else %}bg-blue-50 text-blue-800 border-blue-200{% endif %}">
+                            <div class="flex items-center gap-2 text-sm font-medium">
+                                <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill text-green-500{% else %}bi-info-circle-fill text-blue-500{% endif %} text-lg"></i>
+                                <span>{{ message }}</span>
+                            </div>
+                            <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                                <i class="bi bi-x-lg text-xs"></i>
+                            </button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            {% block content %}
+            {% endblock %}
+        </main>
+
+       
+</body>
+</html>
+

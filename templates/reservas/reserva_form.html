@@ -1,0 +1,124 @@
+{% extends "reservas/base_reservas.html" %}
+{% block title %}Nueva Reservación{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 20px;">
+                <div class="row g-0">
+                    <!-- Left side: Information/Visual -->
+                    <div class="col-md-4 d-none d-md-flex align-items-center justify-content-center text-white p-4" 
+                         style="background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);">
+                        <div class="text-center">
+                            <i class="bi bi-door-open-fill mb-3" style="font-size: 4rem;"></i>
+                            <h3 class="fw-bold">Reserva tu Espacio</h3>
+                            <p class="small opacity-75">Asegura tu lugar para reuniones productivas y eficientes.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Right side: Form -->
+                    <div class="col-md-8 bg-white p-4 p-md-5">
+                        <div class="mb-4">
+                            <h2 class="fw-bold text-dark">Nueva Reservación</h2>
+                            <p class="text-muted small">Completa los campos para agendar la sala de juntas.</p>
+                        </div>
+
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+
+                        {% if form.errors %}
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <h5 class="alert-heading fw-bold small mb-2"><i class="bi bi-exclamation-triangle-fill me-2"></i>Por favor corrige los siguientes errores:</h5>
+                                <ul class="mb-0 small ps-3">
+                                    {% for field in form %}
+                                        {% for error in field.errors %}
+                                            <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                                        {% endfor %}
+                                    {% endfor %}
+                                    {% for error in form.non_field_errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endif %}
+
+
+                        <form method="post" class="needs-validation" novalidate>
+                            {% csrf_token %}
+                            
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold text-dark">Nombre Completo</label>
+                                    {{ form.nombre }}
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-dark">Departamento</label>
+                                    {{ form.departamento }}
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-dark">Puesto</label>
+                                    {{ form.puesto }}
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold text-dark">Seleccionar Sala</label>
+                                    {{ form.sala }}
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold text-dark">Fecha de la Reunión</label>
+                                    {{ form.fecha }}
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-dark">Hora Inicio</label>
+                                    {{ form.hora_inicio }}
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-dark">Hora Fin</label>
+                                    {{ form.hora_fin }}
+                                </div>
+                            </div>
+
+                            <div class="mt-5 d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg shadow-sm" style="background: linear-gradient(135deg, #2c5282 0%, #1e3a5f 100%); border: none; border-radius: 12px;">
+                                    Confirmar Reservación
+                                </button>
+                                <a href="{% url 'reserva_list' %}" class="btn btn-link text-muted">Cancelar</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control {
+        border: 2px solid #edf2f7;
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
+        transition: all 0.2s;
+    }
+    .form-control:focus {
+        border-color: #2c5282;
+        box-shadow: 0 0 0 4px rgba(44, 82, 130, 0.1);
+    }
+    .form-label {
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
